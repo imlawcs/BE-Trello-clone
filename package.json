@@ -27,6 +27,7 @@
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/express": "^5.0.0",
+    "@types/http-status-codes": "^1.2.0",
     "@types/node": "^22.7.9",
     "@types/nodemailer": "^6.4.16",
     "ts-node": "^10.9.2",

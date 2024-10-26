@@ -5,7 +5,7 @@ import userService from './user.service';
 class UserController {
     public async getUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const { id } = req.params;
+            const id = Number(req.params.id);
 
             if (id) {
                 const user = await service.getUserById(id);
@@ -19,15 +19,15 @@ class UserController {
         }
     }
 
-    public async getUserByRoleName(req: Request, res: Response, next: NextFunction): Promise<void> {
-        try {
-            const { roleName } = req.params;
-            const users = await service.getUserByRoleName(roleName);
-            res.status(200).send(users);
-        } catch (error) {
-            next(error);
-        }
-    }
+    // public async getUserByRoleName(req: Request, res: Response, next: NextFunction): Promise<void> {
+    //     try {
+    //         const { roleName } = req.params;
+    //         const users = await service.getUserByRoleName(roleName);
+    //         res.status(200).send(users);
+    //     } catch (error) {
+    //         next(error);
+    //     }
+    // }
 
     // public async createUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     //     try {
@@ -41,7 +41,7 @@ class UserController {
 
     public async updateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const { id } = req.params;
+            const id = Number(req.params.id);
             const user = req.body;
             const updateStatus = await service.updateUser(id, user);
             res.status(200).send(updateStatus);
@@ -52,7 +52,7 @@ class UserController {
 
     public async deleteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const { id } = req.params;
+            const id = Number(req.params.id);
             const deleteStatus = await service.deleteUser(id);
             res.status(200).send(deleteStatus);
         } catch (error) {
@@ -64,6 +64,16 @@ class UserController {
         try {
             const { userId, roleId } = req.body;
             const result = await service.assignRole(userId, roleId);
+            res.status(200).json(result);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public async removeRole(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { userId, roleId } = req.body;
+            const result = await service.removeRole(userId, roleId);
             res.status(200).json(result);
         } catch (error) {
             next(error);

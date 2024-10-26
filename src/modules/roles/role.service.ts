@@ -1,11 +1,13 @@
-import db from '../../config/connection';
+import RoleRepository from './role.repository';
 import customError from '../../common/error/customError';
-import Role from '../../common/types/role.interface';
+import { Role } from '../../database/entities/role';
+import { Result } from '../../common/response/Result';
+import permissionRepository from '../permissions/permission.repository';
 
 class RoleService {
     async getAllRoles(): Promise<Role[]> {
         try {
-            const roles: any = await db.query('SELECT * FROM roles');
+            const roles: any = await RoleRepository.findAllRole();
             if (roles[0].length === 0) {
                 throw new customError(404, 'No roles found');
             }
@@ -15,9 +17,9 @@ class RoleService {
         }
     }
 
-    async getRoleById(id: string): Promise<Role[]> {
+    async getRoleById(id: number): Promise<Role[]> {
         try {
-            const role: any = await db.query('SELECT * FROM roles WHERE id = ?', [id]);
+            const role: any = await RoleRepository.findRoleById(id);
             if (role[0].length === 0) {
                 throw new customError(404, 'Role not found');
             }
@@ -46,46 +48,40 @@ class RoleService {
     //     }
     // }
 
-    async updateRole(id: string, role: Role): Promise<{ status: number; message: string }> {
+    async updateRole(id: number, role: Role): Promise<Result> {
         try {
             if (!id) {
                 throw new customError(400, 'No id provided');
             }
-            const roleExist: any = await db.query('SELECT * FROM roles WHERE id = ?', [id]);
+            const roleExist: any = await RoleRepository.findRoleById(id);
             if (roleExist[0].length === 0) {
                 throw new customError(404, 'Role not found');
             }
-            const rolenameExist: any = await db.query('SELECT * FROM roles WHERE rolename = ?', [role.rolename]);
+            const rolenameExist: any = await RoleRepository.findRoleByName(role.name);
             if (rolenameExist[0].length > 0) {
                 throw new customError(409, 'Rolename already exists');
             }
-            if (!role.rolename) {
+            if (!role.name) {
                 throw new customError(400, 'No empty fields');
             }
-            await db.query('UPDATE roles SET ? WHERE id = ?', [role, id]);
-            return {
-                status: 200,
-                message: 'Updated',
-            };
+            await RoleRepository.update(role);
+            return new Result(true, 200, 'Updated');
         } catch (error) {
             throw error;
         }
     }
 
-    async deleteRole(id: string): Promise<{ status: number; message: string }> {
+    async deleteRole(id: number): Promise<Result> {
         try {
             if (!id) {
                 throw new customError(400, 'No id provided');
             }
-            const roleExist: any = await db.query('SELECT * FROM roles WHERE id = ?', [id]);
+            const roleExist: any = await RoleRepository.findRoleById(id);
             if (roleExist[0].length === 0) {
                 throw new customError(404, 'Role not found');
             }
-            await db.query('DELETE FROM roles WHERE id = ?', [id]);
-            return {
-                status: 200,
-                message: 'Deleted',
-            };
+            await RoleRepository.delete(id);
+            return new Result(true, 200, 'Deleted');
         } catch (error) {
             throw error;
         }
@@ -96,82 +92,73 @@ class RoleService {
             if (!roleId) {
                 throw new customError(400, 'No role id provided');
             }
-            const permissions : any = await db.query('SELECT permissions.name FROM permissions JOIN role_permission ON permissions.id = role_permission.permission_id WHERE role_permission.roleId = ?', [roleId]);
-            return permissions[0].map((permission: any) => permission.name);
+            const permissions : any = await RoleRepository.findPermissionsByRoleId(roleId);
+            return permissions;
         } catch (error) {
             throw error;
         }
     }
 
 
-    async assignPermission(roleId: number, permissionId: number): Promise<{ status: number; message: string }> {
+    async assignPermission(roleId: number, permissionId: number): Promise<Result> {
         try {
-            const roleExist : any = await db.query('SELECT * FROM roles WHERE id = ?', [roleId]);
+            const roleExist : any = await RoleRepository.findRoleById(roleId);
             if (roleExist.length === 0) {
                 throw new customError(404, 'Role not found');
             }
 
-            const permissionExist : any = await db.query('SELECT * FROM permissions WHERE id = ?', [permissionId]);
+            const permissionExist : any = await permissionRepository.findPermissionById(permissionId);
             if (permissionExist.length === 0) {
                 throw new customError(404, 'Permission not found');
             }
 
-            const rolePermissionExist : any = await db.query('SELECT * FROM role_permission WHERE role_id = ? AND permission_id = ?', [roleId, permissionId]);
+            const rolePermissionExist : any = await RoleRepository.findRolePermission(roleExist, permissionExist);
             if (rolePermissionExist[0].length !== 0) {
                 throw new customError(409, 'Permission already assigned to role');
             }
 
-            await db.query('INSERT INTO role_permission (role_id, permission_id) VALUES (?, ?)', [roleId, permissionId]);
-            return {
-                status: 200,
-                message: 'Permission assigned successfully'
-            };
+            await RoleRepository.assignPermissionToRole(roleExist, permissionExist);
+            return new Result(true, 200, 'Permission assigned to role successfully');
         } catch (error) {
             throw error;
         }
     }
 
-    async deletePermissionOfRole(roleId: number, permissionId: number): Promise<{ status: number; message: string }> {
+    async deletePermissionOfRole(roleId: number, permissionId: number): Promise<Result> {
         try {
-            const roleExist : any = await db.query('SELECT * FROM roles WHERE id = ?', [roleId]);
+            const roleExist : any = await RoleRepository.findRoleById(roleId);
             if (roleExist.length === 0) {
                 throw new customError(404, 'Role not found');
             }
 
-            const permissionExist : any = await db.query('SELECT * FROM permissions WHERE id = ?', [permissionId]);
+            const permissionExist : any = await permissionRepository.findPermissionById(permissionId);
             if (permissionExist.length === 0) {
                 throw new customError(404, 'Permission not found');
             }
 
-            const rolePermissionExist : any = await db.query('SELECT * FROM role_permission WHERE role_id = ? AND permission_id = ?', [roleId, permissionId]);
+            const rolePermissionExist : any = await RoleRepository.findRolePermission(roleExist, permissionExist);
             if (rolePermissionExist[0].length === 0) {
                 throw new customError(404, 'Permission not assigned to role');
             }
 
-            await db.query('DELETE FROM role_permission WHERE role_id = ? AND permission_id = ?', [roleId, permissionId]);
-            return {
-                status: 200,
-                message: 'Permission deleted successfully'
-            };
+            await RoleRepository.deletePermissionFromRole(roleExist, permissionId);
+            return new Result(true, 200, 'Permission deleted from role successfully');
         } catch (error) {
             throw error;
         }
     }
 
-    async createRole(name: string): Promise<{ status: number; message: string }> {
+    async createRole(name : string): Promise<Result> {
         try {
             if (!name) {
                 throw new customError(400, 'Role name not provided');
             }
-            const roleExist : any = await db.query('SELECT * FROM role WHERE name = ?', [name]);
+            const roleExist : any = await RoleRepository.findRoleByName(name);
             if (roleExist.length !== 0) {
                 throw new customError(409, 'Role already exists');
             }
-            await db.query('INSERT INTO role (name) VALUES (?)', [name]);
-            return {
-                status: 201,
-                message: 'Role created successfully'
-            };
+            await RoleRepository.create(name);
+            return new Result(true, 201, 'Role created successfully');
         } catch (error) {
             throw error;
         }

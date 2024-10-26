@@ -4,6 +4,7 @@ export enum Permission {
     UPDATE_USER = 'update-user',
     DELETE_USER = 'delete-user',
     ASSIGN_ROLE = 'assign-role',
+    REMOVE_ROLE = 'remove-role',
 
     CREATE_ROLE = 'create-role',
     GET_ROLE = 'get-role',
