@@ -1,29 +1,31 @@
-import db from "../../config/connection"; 
+import userRepository from "../users/user.repository";
+import roleRepository from "../roles/role.repository";
 import customError from "../../common/error/customError";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { User } from "../../database/entities/user";
+import { Role } from "../../database/entities/role";
 
 dotenv.config();
 
 const jwtSecret = process.env.JWT_SECRET || 'abc';
 
-interface User {
+interface IUser {
     username: string;
     password: string;
     email: string;
     fullname: string;
-    role: number; 
 }
 
 class AuthService {
-    async register(user: User): Promise<{ status: number; message: string }> {
+    async register(user: IUser): Promise<{ status: number; message: string }> {
         try {
-            if (!user.username || !user.password || !user.email || !user.fullname || !user.role) 
+            if (!user.username || !user.password || !user.email || !user.fullname) 
                 throw new customError(400, 'No empty fields');
 
-            const userExist : any = await db.query('SELECT * FROM users WHERE username = ?', [user.username]);
-            if (userExist[0].length !== 0) {
+            const userExist : User | null = await userRepository.findByUsername(user.username);
+            if (userExist) {
                 throw new customError(409, 'Username already exists');
             }
 
@@ -32,7 +34,27 @@ class AuthService {
             const hashedPassword = await bcrypt.hash(user.password, saltRound);
 
             user.password = hashedPassword;
-            await db.query('INSERT INTO users ( username, password, email, fullname, roleId ) VALUES ( ?, ?, ?, ?, ? );', [user.username, user.password, user.email, user.fullname, user.role]);
+
+            const newUser : User = {
+                username: user.username,
+                password: user.password,
+                email: user.email,
+                fullname: user.fullname,
+                roles: [],
+                cards: [],
+                comments: [],
+                notifications: [],
+                workspaces: [],
+            }
+
+            await userRepository.create(newUser);
+            const User : User | null = await userRepository.findByUsername(user.username);
+            const role : Role | null = await roleRepository.findRoleByName('user');
+            if (User && role) {
+                await userRepository.assignRoleToUser(User, role);
+            } else {
+                throw new customError(404, 'User or role not found');
+            }
             return {
                 status: 201,
                 message: 'Register successfully'
@@ -44,24 +66,22 @@ class AuthService {
 
     async login(user: { username: string; password: string }): Promise<{ status: number; message: string; token: string }> {
         try {
-            // Retrieve the user from the database
             if (!user.username || !user.password)
                 throw new customError(400, 'No empty fields');
 
-            const userExist : any = await db.query('SELECT * FROM users WHERE username = ?', [user.username]);
-            if (userExist[0].length === 0) {
+            const userExist = await userRepository.findByUsername(user.username);
+            if (userExist === null) {
                 throw new customError(404, 'Invalid username or password');
             }
 
-            // Compare password
-            const users = userExist[0][0];
-            const passwordMatch = await bcrypt.compare(user.password, users.password);
+            console.log("Stored password hash:", userExist.password);
+            const passwordMatch = await bcrypt.compare(user.password, userExist.password);
+
             if (!passwordMatch) 
                 throw new customError(400, 'Invalid username or password');
             else {
-                // Create JWT token
-                const [roleId, userId] = await db.query('SELECT roleId, id FROM users WHERE username = ?', [user.username]);
-                const token = jwt.sign({ role: roleId, userId: userId }, jwtSecret, { expiresIn: '1h' });
+                const userId = userExist.id;
+                const token = jwt.sign({ id: userId }, jwtSecret, { expiresIn: '1h' });
                 return {
                     status: 200,
                     message: 'Login successfully',

@@ -3,27 +3,29 @@ import customError from '../../common/error/customError';
 import { Role } from '../../database/entities/role';
 import { Result } from '../../common/response/Result';
 import permissionRepository from '../permissions/permission.repository';
+import { BlobOptions } from 'buffer';
+import { permission } from 'process';
 
 class RoleService {
     async getAllRoles(): Promise<Role[]> {
         try {
-            const roles: any = await RoleRepository.findAllRole();
-            if (roles[0].length === 0) {
+            const roles: Role[] = await RoleRepository.findAllRole();
+            if (roles.length === 0) {
                 throw new customError(404, 'No roles found');
             }
-            return roles[0];
+            return roles;
         } catch (error) {
             throw error;
         }
     }
 
-    async getRoleById(id: number): Promise<Role[]> {
+    async getRoleById(id: number): Promise<Role> {
         try {
-            const role: any = await RoleRepository.findRoleById(id);
-            if (role[0].length === 0) {
+            const role: Role | null = await RoleRepository.findRoleById(id);
+            if (role === null) {
                 throw new customError(404, 'Role not found');
             }
-            return role[0];
+            return role;
         } catch (error) {
             throw error;
         }
@@ -48,23 +50,25 @@ class RoleService {
     //     }
     // }
 
-    async updateRole(id: number, role: Role): Promise<Result> {
+    async updateRole(id: number, role: Partial<Role>): Promise<Result> {
         try {
             if (!id) {
                 throw new customError(400, 'No id provided');
             }
-            const roleExist: any = await RoleRepository.findRoleById(id);
-            if (roleExist[0].length === 0) {
+
+            const roleExist: Role | null = await RoleRepository.findRoleById(id);
+            if (!roleExist) {
                 throw new customError(404, 'Role not found');
             }
-            const rolenameExist: any = await RoleRepository.findRoleByName(role.name);
-            if (rolenameExist[0].length > 0) {
-                throw new customError(409, 'Rolename already exists');
+
+            if (role.name) {    
+                const rolenameExist: Role | null = await RoleRepository.findRoleByName(role.name);
+                if (rolenameExist) {
+                    throw new customError(409, 'Rolename already exists');
+                }
             }
-            if (!role.name) {
-                throw new customError(400, 'No empty fields');
-            }
-            await RoleRepository.update(role);
+
+            await RoleRepository.update(id, role);
             return new Result(true, 200, 'Updated');
         } catch (error) {
             throw error;
@@ -76,10 +80,20 @@ class RoleService {
             if (!id) {
                 throw new customError(400, 'No id provided');
             }
-            const roleExist: any = await RoleRepository.findRoleById(id);
-            if (roleExist[0].length === 0) {
+            const roleExist = await RoleRepository.findRoleById(id);
+            if (roleExist === null) {
                 throw new customError(404, 'Role not found');
             }
+
+            const rolePermissionExist = await RoleRepository.findPermissionsByRoleId(id);
+
+            for (const permissionName of rolePermissionExist) {
+                const permission = await permissionRepository.findPermissionByName(permissionName);
+                if (permission) {
+                    await RoleRepository.deletePermissionFromRole(roleExist, permission.id);
+                }
+            }
+
             await RoleRepository.delete(id);
             return new Result(true, 200, 'Deleted');
         } catch (error) {
@@ -92,7 +106,10 @@ class RoleService {
             if (!roleId) {
                 throw new customError(400, 'No role id provided');
             }
-            const permissions : any = await RoleRepository.findPermissionsByRoleId(roleId);
+            const permissions = await RoleRepository.findPermissionsByRoleId(roleId);
+            if (permissions.length === 0) {
+                throw new customError(404, 'No permissions found');
+            }
             return permissions;
         } catch (error) {
             throw error;
@@ -102,42 +119,43 @@ class RoleService {
 
     async assignPermission(roleId: number, permissionId: number): Promise<Result> {
         try {
-            const roleExist : any = await RoleRepository.findRoleById(roleId);
-            if (roleExist.length === 0) {
+            const roleExist = await RoleRepository.findRoleById(roleId);
+            if (!roleExist) {
                 throw new customError(404, 'Role not found');
             }
 
-            const permissionExist : any = await permissionRepository.findPermissionById(permissionId);
-            if (permissionExist.length === 0) {
+            const permissionExist = await permissionRepository.findPermissionById(permissionId);
+            if (!permissionExist) {
                 throw new customError(404, 'Permission not found');
             }
 
-            const rolePermissionExist : any = await RoleRepository.findRolePermission(roleExist, permissionExist);
-            if (rolePermissionExist[0].length !== 0) {
+            const rolePermissionExist : boolean = await RoleRepository.findRolePermission(roleId, permissionId);
+            if (rolePermissionExist) {
                 throw new customError(409, 'Permission already assigned to role');
             }
 
             await RoleRepository.assignPermissionToRole(roleExist, permissionExist);
             return new Result(true, 200, 'Permission assigned to role successfully');
-        } catch (error) {
+        } 
+        catch (error) {
             throw error;
         }
     }
 
     async deletePermissionOfRole(roleId: number, permissionId: number): Promise<Result> {
         try {
-            const roleExist : any = await RoleRepository.findRoleById(roleId);
-            if (roleExist.length === 0) {
+            const roleExist = await RoleRepository.findRoleById(roleId);
+            if (roleExist === null) {
                 throw new customError(404, 'Role not found');
             }
 
-            const permissionExist : any = await permissionRepository.findPermissionById(permissionId);
-            if (permissionExist.length === 0) {
+            const permissionExist = await permissionRepository.findPermissionById(permissionId);
+            if (permissionExist === null) {
                 throw new customError(404, 'Permission not found');
             }
 
-            const rolePermissionExist : any = await RoleRepository.findRolePermission(roleExist, permissionExist);
-            if (rolePermissionExist[0].length === 0) {
+            const rolePermissionExist = await RoleRepository.findRolePermission(roleId, permissionId);
+            if (!rolePermissionExist) {
                 throw new customError(404, 'Permission not assigned to role');
             }
 
@@ -153,11 +171,16 @@ class RoleService {
             if (!name) {
                 throw new customError(400, 'Role name not provided');
             }
-            const roleExist : any = await RoleRepository.findRoleByName(name);
-            if (roleExist.length !== 0) {
+            const roleExist : Role | null = await RoleRepository.findRoleByName(name);
+            if (roleExist) {
                 throw new customError(409, 'Role already exists');
             }
-            await RoleRepository.create(name);
+            const role = {
+                name: name,
+                permissions: [],
+                users: []
+            }
+            await RoleRepository.create(role);
             return new Result(true, 201, 'Role created successfully');
         } catch (error) {
             throw error;

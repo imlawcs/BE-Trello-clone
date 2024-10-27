@@ -43,7 +43,7 @@ class PermissionRepository {
 
     public async create(name : string): Promise<void> {
         try {
-            this.permissionRepository.create({ name: name });
+            this.permissionRepository.save({ name: name });
         }
         catch (error) {
             throw error;

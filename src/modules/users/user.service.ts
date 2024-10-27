@@ -3,16 +3,18 @@ import { IUserToGet , IUserToUpdate } from '../../common/types/user.interface';
 import roleService from '../roles/role.service';
 import { Result } from '../../common/response/Result';
 import UserRepository from './user.repository';
+import RoleRepository from '../roles/role.repository';
 import { User } from '../../database/entities/user';
+import { boolean } from 'joi';
 
 class UserService {
     async getAllUsers(): Promise<Result> {
         try {
-            const [users]: any = await UserRepository.findAllUser();
+            const users : any[] = await UserRepository.findAllUser();
             if (users.length === 0) {
                 throw new customError(404, 'No users found');
             }
-            return new Result(true, 200, 'Get users successful', { users });
+            return new Result(true, 200, 'Get users successful', { users: users });
         } catch (error) {
             throw error;
         }
@@ -20,11 +22,11 @@ class UserService {
 
     async getUserById(id: number): Promise<Result> {
         try {
-            const [rows] : any = await UserRepository.findByUserId(id);
-            if (rows.length === 0) {
+            const user : User | null = await UserRepository.findByUserId(id);
+            if (user === null) {
                 throw new customError(404, 'User not found');
             }
-            return new Result(true, 200, 'Get user successful', { user: rows[0] });
+            return new Result(true, 200, 'Get user successful', { user: user });
         } catch (error) {
             throw error;
         }
@@ -88,16 +90,13 @@ class UserService {
             if (!id) {
                 throw new customError(400, 'No id provided');
             }
-            const [userExist]: any = await UserRepository.findByUserId(id);
-            if (userExist.length === 0) {
+            const userExist = await UserRepository.findByUserId(id);
+            if (userExist === null) {
                 throw new customError(404, 'User not found');
             }
             if (user.username) {
-                const [usernameExist]: any = await UserRepository.findByUsername(user.username);
-                if (usernameExist.length > 0) {
-                    throw new customError(409, 'Username already exists');
-                }
-                if (usernameExist.length > 0) {
+                const usernameExist = await UserRepository.findByUsername(user.username);
+                if (usernameExist) {
                     throw new customError(409, 'Username already exists');
                 }
             }
@@ -113,10 +112,20 @@ class UserService {
             if (!id) {
                 throw new customError(400, 'No id provided');
             }
-            const [userExist]: any = await UserRepository.findByUserId(id);
-            if (userExist.length === 0) {
+            const userExist = await UserRepository.findByUserId(id);
+            if (userExist === null) {
                 throw new customError(404, 'User not found');
             }
+
+            const userRoles = await UserRepository.getRolesByUserId(id); 
+
+            for (const roleName of userRoles) {
+                const role = await RoleRepository.findRoleByName(roleName);
+                if (role) {
+                    await UserRepository.removeRoleFromUser(userExist, role); 
+                }
+            }
+
             await UserRepository.delete(id);
             return new Result(true, 200, 'Deleted');
         } catch (error) {
@@ -127,25 +136,32 @@ class UserService {
     async assignRole(userId: number, roleId: number): Promise<Result> {
         try {
             if (!userId || !roleId) {
-                throw new customError(400, 'User id or role id not provided');
+                throw new customError(400, 'User ID or Role ID not provided.');
             }
-            const userExist : any = await UserRepository.findByUserId(userId);
-            if (userExist.length === 0) {
-                throw new customError(404, 'User not found');
+    
+            const user = await UserRepository.findByUserId(userId);
+            if (!user) {
+                throw new customError(404, 'User not found.');
             }
-
-            const roleExist : any = await roleService.getRoleById(roleId);
-            if (roleExist.length === 0) {
-                throw new customError(404, 'Role not found');
+    
+            const role = await roleService.getRoleById(roleId);
+            if (!role) {
+                throw new customError(404, 'Role not found.');
             }
-            else{
-                await UserRepository.assignRoleToUser(userExist, roleExist);
-                return new Result(true, 200, 'Assign role to user successful');
+    
+            const userRoleExists : boolean = await UserRepository.findUserRole(userId, roleId);
+            if (userRoleExists) {
+                throw new customError(409, 'User already has this role.');
             }
+    
+            await UserRepository.assignRoleToUser(user, role);
+            return new Result(true, 200, 'Role assigned to user successfully.');
+            
         } catch (error) {
             throw error;
         }
     }
+    
 
     async removeRole(userId: number, roleId: number): Promise<Result> {
         try {
@@ -161,10 +177,20 @@ class UserService {
             if (roleExist.length === 0) {
                 throw new customError(404, 'Role not found');
             }
-            else{
-                await UserRepository.removeRoleFromUser(userExist, roleExist);
-                return new Result(true, 200, 'Remove role from user successful');
+
+            const userRoleExist : boolean = await UserRepository.findUserRole(userId, roleId);
+            if (!userRoleExist) {
+                throw new customError(404, 'User does not have this role');
             }
+
+            const roleOfUser = await UserRepository.getRolesByUserId(userId);
+            if (roleOfUser.length === 1) {
+                throw new customError(400, 'User must have at least one role');
+            }
+            
+            await UserRepository.removeRoleFromUser(userExist, roleExist);
+            return new Result(true, 200, 'Remove role from user successful');
+            
         } catch (error) {
             throw error;
         }
@@ -184,7 +210,14 @@ class UserService {
             if (!userId) {
                 throw new customError(400, 'No user id provided');
             }
+            const userExist = await UserRepository.findByUserId(userId);
+            if (userExist === null) {
+                throw new customError(404, 'User not found');
+            }
             const roles : string[] = await UserRepository.getRolesByUserId(userId);
+            if (roles.length === 0) {
+                throw new customError(404, 'No roles found');
+            }
             return roles;
         } catch (error) {
             throw error;
@@ -197,6 +230,9 @@ class UserService {
                 throw new customError(400, 'No user id provided');
             }
             const permissions : string[] = await UserRepository.getPermissionsByUserId(userId);
+            if (permissions.length === 0) {
+                throw new customError(404, 'No permissions found');
+            }
             return permissions;
         } catch (error) {
             throw error;

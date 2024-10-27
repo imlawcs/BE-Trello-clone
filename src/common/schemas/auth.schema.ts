@@ -16,11 +16,7 @@ const registerSchema = Joi.object({
     fullname: Joi.string()
         .min(3)
         .max(100)
-        .required(),
-    role: Joi.string()
-        .valid('admin', 'user')
-        .trim()
-        .required(),
+        .required()
 })
 .with('password', 'repeatPassword');
 

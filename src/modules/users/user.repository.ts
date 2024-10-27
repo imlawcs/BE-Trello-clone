@@ -12,7 +12,9 @@ class UserRepository {
                 select: ["id", "email", "username", "fullname"],
                 relations: ["roles"], 
             });
-    
+
+            console.log('Users retrieved:', users);
+            
             return users.map(user => ({
                 id: user.id,
                 email: user.email,
@@ -28,7 +30,7 @@ class UserRepository {
     public async findByUsername(username: string): Promise<User | null> {
         try {
             const user = await this.userRepository.findOne({
-                select: ["id", "email", "username", "fullname"],
+                select: ["id", "email", "username", "fullname", "password"],
                 where: {
                     username,
                 },
@@ -116,8 +118,41 @@ class UserRepository {
         }
     }
 
+    public async findUserRole(userId: number, roleId: number): Promise<boolean> {
+        try {
+            const user = await this.userRepository.findOne({
+                select: ["id"],
+                where: {
+                    id: userId,
+                },
+                relations: ["roles"],
+            });
+    
+            if (!user) {
+                throw new customError(404, `User with ID ${userId} not found.`);
+            }
+    
+            const hasRole = user.roles.some((role) => Number(role.id) === Number(roleId));
+            return hasRole;
+        } catch (error) {
+            throw new customError(400, `UserRepository has error: ${error}`);
+        }
+    }
+    
+
     public async assignRoleToUser(user : User, role : Role): Promise<void> {
         try {
+            if(!user.roles) {
+                const existingUser = await this.userRepository.findOne({
+                    where: {
+                        id: user.id,
+                    },
+                    relations: ["roles"],
+                });
+
+                user.roles = existingUser?.roles || [];
+            }
+
             user.roles.push(role);
             await this.userRepository.save(user);
         }
@@ -128,6 +163,16 @@ class UserRepository {
 
     public async removeRoleFromUser(user : User, role : Role): Promise<void> {
         try {
+            if(!user.roles) {
+                const existingUser = await this.userRepository.findOne({
+                    where: {
+                        id: user.id,
+                    },
+                    relations: ["roles"],
+                });
+
+                user.roles = existingUser?.roles || [];
+            }
             user.roles = user.roles.filter(r => r.id !== role.id);
             await this.userRepository.save(user);
         }

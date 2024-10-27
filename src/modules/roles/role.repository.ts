@@ -2,6 +2,7 @@ import { dbSource } from "../../config/ormconfig";
 import { Role } from "../../database/entities/role";
 import { Permission } from "../../database/entities/permission";
 import customError from "../../common/error/customError";
+import { log } from "console";
 
 class RoleRepository {
     private readonly roleRepository = dbSource.getRepository(Role);
@@ -15,9 +16,9 @@ class RoleRepository {
         }
     }
     
-    public async create(name: string): Promise<Role> {
+    public async create(role : Role): Promise<Role> {
         try {
-            return await this.roleRepository.save({ name: name });
+            return await this.roleRepository.save(role);
         }
         catch (error) {
             throw new customError(400, `RoleReposity has error : ${error}`);
@@ -52,9 +53,9 @@ class RoleRepository {
         }
     }
 
-    public async update(role: Role): Promise<void> {
+    public async update(roleId: number, role: Partial<Role>): Promise<void> {
         try {
-            await this.roleRepository.update(role.id, role);
+            await this.roleRepository.update(roleId, role);
         }
         catch (error) {
             throw new customError(400, `RoleReposity has error : ${error}`);
@@ -74,7 +75,7 @@ class RoleRepository {
         try {
             const role = await this.roleRepository.findOne({
                 select: ["id"],
-                relations: ["permission"],
+                relations: ["permissions"],
                 where: {
                     id: id
                 }
@@ -90,13 +91,18 @@ class RoleRepository {
         try {
             const role = await this.roleRepository.findOne({
                 select: ["id"],
-                relations: ["permission"],
                 where: {
-                    id: roleId
-                }
-            });
-            const isExistPermission = role?.permissions.some((p) => p.id === permissionId);
-            return isExistPermission ? true : false;
+                    id: roleId,
+                },
+                relations: ["permissions"],
+            });          
+            
+            if(!role) {
+                throw new customError(404, `Role not found`);
+            }
+
+            const hasPermission = role?.permissions.some((p) => p.id === permissionId);
+            return hasPermission;
         }
         catch (error) {
             throw new customError(400, `RoleReposity has error : ${error}`);
@@ -105,6 +111,14 @@ class RoleRepository {
 
     public async deletePermissionFromRole(role: Role, permissionId: number): Promise<void> {
         try {
+            if (!role.permissions) {
+                const existingRole = await this.roleRepository.findOne({
+                    where: { id: role.id },
+                    relations: ["permissions"],
+                });
+    
+                role.permissions = existingRole?.permissions || [];
+            }
             role.permissions = role.permissions.filter((p) => p.id !== permissionId);
             await this.roleRepository.save(role);
         }
@@ -113,15 +127,26 @@ class RoleRepository {
         }
     }
 
-    public async assignPermissionToRole(role: Role, permission : Permission): Promise<void> {
+    public async assignPermissionToRole(role: Role, permission: Permission): Promise<void> {
         try {
-            role.permissions.push(permission);
-            await this.roleRepository.save(role);
-        }
-        catch (error) {
-            throw new customError(400, `RoleReposity has error : ${error}`);
+            if (!role.permissions) {
+                const existingRole = await this.roleRepository.findOne({
+                    where: { id: role.id },
+                    relations: ["permissions"],
+                });
+    
+                role.permissions = existingRole?.permissions || [];
+            }
+    
+            if (!role.permissions.some(p => p.id === permission.id)) {
+                role.permissions.push(permission);
+                await this.roleRepository.save(role);
+            } 
+        } catch (error) {
+            throw new customError(400, `RoleRepository has error: ${error}`);
         }
     }
+    
 }
 
 export default new RoleRepository();

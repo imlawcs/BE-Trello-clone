@@ -9,7 +9,7 @@ import { Board } from "./board";
 @Entity()
 export class User {
     @PrimaryGeneratedColumn()
-    id!: number
+    id?: number
     @Column({length: 100})
     username!: string
     @Column({length: 100})
@@ -19,7 +19,7 @@ export class User {
     @Column({length: 100})
     fullname!: string
     @CreateDateColumn()
-    created_at!: Date
+    created_at?: Date
 
     @ManyToMany(() => Role, roles => roles.users)
     roles!: Role[]

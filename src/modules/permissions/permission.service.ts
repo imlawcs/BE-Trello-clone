@@ -10,8 +10,8 @@ class PermissionService {
             if (!name) {
                 throw new customError(400, 'Permission name not provided');
             }
-            const permissionExist : any = await permissionRepository.findPermissionByName(name);
-            if (permissionExist.length !== 0) {
+            const permissionExist : Permission | null = await permissionRepository.findPermissionByName(name);
+            if (permissionExist) {
                 throw new customError(409, 'Permission already exists');
             }
             await permissionRepository.create(name);
@@ -24,6 +24,9 @@ class PermissionService {
     async findAllPermission(): Promise<Permission[]> {
         try {
             const permissions = await permissionRepository.findAllPermission();
+            if (permissions.length === 0) {
+                throw new customError(404, 'Permissions not found');
+            }
             return permissions;
         } catch (error) {
             throw error;
@@ -47,7 +50,7 @@ class PermissionService {
             if (!permission.name) {
                 throw new customError(400, 'Permission name not provided');
             }
-            const permissionExist = await permissionRepository.findPermissionById(id);
+            const permissionExist : Permission | null = await permissionRepository.findPermissionById(id);
             if (!permissionExist) {
                 throw new customError(404, 'Permission not found');
             }

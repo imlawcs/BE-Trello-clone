@@ -7,7 +7,7 @@ class RbacMiddleware{
             const userId = Number(req.user.id);
             console.log(userId);
             
-            const userPermissions = await service.getPermissionsByUserId(userId);
+            const userPermissions = await service.getPermissionsOfUser(userId);
             if(userPermissions.includes(permission)){
                 return next();
             }

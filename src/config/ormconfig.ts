@@ -1,8 +1,8 @@
-import "reflect-metadata"
-import { DataSource } from "typeorm"
-import dotenv from "dotenv"
+import "reflect-metadata";
+import { DataSource } from "typeorm";
+import dotenv from "dotenv";
 
-dotenv.config()
+dotenv.config();
 
 export const dbSource = new DataSource({
     type: "mysql",
@@ -16,4 +16,15 @@ export const dbSource = new DataSource({
     entities: [__dirname + "/../database/entities/*.ts"],
     migrations: [__dirname + "/../database/migrations/*.ts"],
     subscribers: [],
-})
+});
+
+const initializeDatabase = async () => {
+    try {
+        await dbSource.initialize();
+        console.log("Database connection established successfully");
+    } catch (error) {
+        console.error("Database connection failed:", error);
+    }
+};
+
+initializeDatabase();
