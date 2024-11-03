@@ -10,7 +10,7 @@ export class Notification {
     title!: string;
     
     @Column()
-    description?: string;
+    cription?: string;
     
     @ManyToOne(() => User, (user) => user.notifications)
     user!: User;

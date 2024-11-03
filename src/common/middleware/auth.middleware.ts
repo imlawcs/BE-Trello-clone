@@ -8,7 +8,6 @@ dotenv.config();
 const jwtSecret = process.env.JWT_SECRET as string;
 
 class AuthMiddleware {
-    // Hàm riêng để kiểm tra và giải mã token
     private getTokenFromHeader(req: Request, res: Response): string | void {
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1];
@@ -17,11 +16,10 @@ class AuthMiddleware {
             return;
         }
         else {
-            return token;
+                return token;
         }
     }
 
-    // Hàm riêng để giải mã và kiểm tra tính hợp lệ của token
     private verifyToken(token: string, res: Response): JwtPayload | string | void {
         try {
             const decoded = jwt.verify(token, jwtSecret);
@@ -33,7 +31,6 @@ class AuthMiddleware {
         }
     }
 
-    // Xác thực token
     authenticateToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const token = this.getTokenFromHeader(req, res);
@@ -48,7 +45,6 @@ class AuthMiddleware {
         }
     }
 
-    // Ủy quyền dựa trên roleId
     authorize = (allowedRoleId: number[]) => {
         return (req: Request, res: Response, next: NextFunction): void => {
             const token = this.getTokenFromHeader(req, res);

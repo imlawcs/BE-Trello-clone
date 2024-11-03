@@ -5,7 +5,6 @@ import authRouter from '../modules/auth/auth.router';
 import permissionRouter from '../modules/permissions/permission.router';
 import path from 'path';
 
-
 const app = express();
 const router = express.Router();
 

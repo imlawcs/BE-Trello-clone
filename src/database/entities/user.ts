@@ -4,10 +4,12 @@ import { Card } from "./card";
 import { Comment } from "./comment";
 import { Notification } from "./notification";
 import { Workspace } from "./workspace";
-import { Board } from "./board";
 
 @Entity()
 export class User {
+    map(arg0: (user: any) => any): any {
+        throw new Error("Method not implemented.");
+    }
     @PrimaryGeneratedColumn()
     id?: number
     @Column({length: 100})
