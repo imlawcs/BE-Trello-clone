@@ -93,11 +93,11 @@ class BoardService {
             if (!id) {
                 throw new customError(400, "Id is required");
             }
-            const board = await boardRepository.findByBoardId(id);
-            if (!board) {
-                throw new customError(404, "Board not found");
+            const lists = await boardRepository.getBoardLists(id);
+            if (!lists) {
+                throw new customError(404, "Lists not found");
             }
-            return new Result(true, 200, "Get board lists successful", board.lists);
+            return new Result(true, 200, "Get board lists successful", lists);
         } catch (error) {
             throw error;
         }
@@ -133,3 +133,5 @@ class BoardService {
         }
     }
 }
+
+export default new BoardService();

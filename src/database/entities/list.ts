@@ -11,7 +11,7 @@ export class List {
     title!: string;
 
     @OneToMany(() => Card, cards => cards.list)
-    cards!: Card;
+    cards!: Card[];
 
     @ManyToOne(() => Board, board => board.lists)
     board!: Board;

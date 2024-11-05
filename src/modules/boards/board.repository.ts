@@ -1,6 +1,7 @@
 import { dbSource } from "../../config/ormconfig";
 import { Board } from "../../database/entities/board";
 import customError from "../../common/error/customError";
+import { List } from "../../database/entities/list";
 
 class BoardRepository {
     private readonly boardRepository = dbSource.getRepository(Board);
@@ -91,6 +92,82 @@ class BoardRepository {
                 throw new customError(400, `BoardRepository has error: Board does not exist`);
             }
             await this.boardRepository.remove(board);
+        } catch (error) {
+            throw new customError(400, `BoardRepository has error: ${error}`);
+        }
+    }
+
+    public async getBoardLists(id: number): Promise<List[]> {
+        try {
+            const board = await this.boardRepository.findOne({
+                select: ["id", "title", "description"],
+                where: {
+                    id,
+                },
+                relations: ["lists"],
+            });
+            if (!board) {
+                throw new customError(400, `BoardRepository has error: Board does not exist`);
+            }
+            if (!board.lists) {
+                throw new customError(400, `BoardRepository has error: Board does not have any list`);
+            }
+            return board.lists;
+        }
+        catch (error) {
+            throw new customError(400, `BoardRepository has error: ${error}`);
+        }
+    }
+
+    // public async isListInBoard
+
+    public async addListToBoard(boardId: number, listId: number): Promise<void> {
+        try {
+            const board = await this.boardRepository.findOne({
+                where: {
+                    id: boardId,
+                },
+                relations: ["lists"],
+            });
+            if (!board) {
+                throw new customError(400, `BoardRepository has error: Board does not exist`);
+            }
+            const list = await dbSource.getRepository(List).findOne({
+                where: {
+                    id: listId,
+                },
+            });
+            if (!list) {
+                throw new customError(400, `BoardRepository has error: List does not exist`);
+            }
+            board.lists.push(list);
+            await this.boardRepository.save(board);
+        } catch (error) {
+            throw new customError(400, `BoardRepository has error: ${error}`);
+        }
+    }
+
+    public async removeListFromBoard(boardId: number, listId: number): Promise<void> {
+        try {
+            const board = await this.boardRepository.findOne({
+                where: {
+                    id: boardId,
+                },
+                relations: ["lists"],
+            });
+            if (!board) {
+                throw new customError(400, `BoardRepository has error: Board does not exist`);
+            }
+            const list = await dbSource.getRepository(List).findOne({
+                where: {
+                    id: listId,
+                },
+            });
+            if (!list) {
+                throw new customError(400, `BoardRepository has error: List does not exist`);
+            }
+            board.lists = board.lists.filter(item => item.id !== listId);
+            await this.boardRepository.save(board);
         } catch (error) {
             throw new customError(400, `BoardRepository has error: ${error}`);
         }
