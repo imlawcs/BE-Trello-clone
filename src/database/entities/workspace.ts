@@ -14,7 +14,7 @@ export class Workspace {
     description?: string;
     
     @ManyToMany(() => User, (users) => users.workspaces)
-    users!: User;
+    users!: User[];
     
     @OneToMany(() => Board, (boards) => boards.workspace)
     boards!: Board[];

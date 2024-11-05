@@ -2,7 +2,6 @@ import workspaceService from "./workspace.service";
 import e, { Request, Response, NextFunction } from "express";
 import { Workspace } from "../../database/entities/workspace";
 import { Result } from "../../common/response/Result";
-import customError from "../../common/error/customError";
 
 class WorkspaceController {
     public async findAllWorkspace(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -36,10 +35,10 @@ class WorkspaceController {
 
     public async addUserToWorkspace(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const workspaceId = Number(req.params.workspaceId);
-            const userId = Number(req.params.userId);
-            const workspace: Workspace | null = await workspaceService.addUserToWorkspace(workspaceId, userId);
-            res.status(200).send(workspace);
+            const workspaceId = Number(req.body.workspaceId);
+            const userId = Number(req.body.userId);
+            const result : Result = await workspaceService.addUserToWorkspace(workspaceId, userId);
+            res.status(200).send(result);
         } catch (error) {
             next(error);
         }
@@ -47,10 +46,10 @@ class WorkspaceController {
 
     public async removeUserFromWorkspace(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const workspaceId = Number(req.params.workspaceId);
-            const userId = Number(req.params.userId);
-            const workspace: Result = await workspaceService.removeUserFromWorkspace(workspaceId, userId);
-            res.status(200).send(workspace);
+            const workspaceId = Number(req.body.workspaceId);
+            const userId = Number(req.body.userId);
+            const result: Result = await workspaceService.removeUserFromWorkspace(workspaceId, userId);
+            res.status(200).send(result);
         } catch (error) {
             next(error);
         }
@@ -68,7 +67,7 @@ class WorkspaceController {
 
     public async updateWorkspace(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const workspace: Workspace = req.body;
+            const workspace: Partial<Workspace> = req.body;
             const result: Result = await workspaceService.updateWorkspace(workspace);
             res.status(result.status).send(result);
         } catch (error) {

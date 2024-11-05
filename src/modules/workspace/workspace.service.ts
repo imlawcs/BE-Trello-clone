@@ -1,4 +1,5 @@
 import workspaceRepository from "./workspace.repository";
+import userRepository from "../users/user.repository";
 import { Workspace } from "../../database/entities/workspace";
 import { User } from "../../database/entities/user";
 import customError from "../../common/error/customError";
@@ -14,7 +15,7 @@ class WorkspaceService {
             const workspaces : Workspace [] = await this.workspaceRepository.findAllWorkspace();   
             if (workspaces.length === 0) {
                 throw new customError(404, 'No workspaces found');
-            }         
+            }
             return new Result(true, 200, 'Get workspaces successful', { workspaces: workspaces });
         } catch (error) {
             throw error;
@@ -55,7 +56,7 @@ class WorkspaceService {
         }
     }
 
-    public async addUserToWorkspace(workspaceId: number, userId: number): Promise<Workspace | null> {
+    public async addUserToWorkspace(workspaceId: number, userId: number): Promise<Result> {
         try {
             if (!workspaceId) {
                 throw new customError(400, 'No workspace id provided');
@@ -63,12 +64,21 @@ class WorkspaceService {
             if (!userId) {
                 throw new customError(400, 'No user id provided');
             }
-            const workspace = await this.workspaceRepository.findByWorkspaceId(workspaceId);
-            if (!workspace) {
+            const WorkspaceExist = await this.workspaceRepository.findByWorkspaceId(workspaceId);
+            if (!WorkspaceExist) {
                 throw new customError(404, 'Workspace not found');
             }
-            await this.workspaceRepository.addUserToWorkspace(workspaceId, userId);
-            return workspace;
+            const UserExist = await userRepository.findByUserId(userId);
+            if (!UserExist) {
+                throw new customError(404, 'User not found');
+            }
+            const isUserInWorkspace = await this.workspaceRepository.findUserOfWorkspace(workspaceId, userId);
+            if (isUserInWorkspace) {
+                throw new customError(409, 'User already in workspace');
+            }
+
+            await this.workspaceRepository.addUserToWorkspace(WorkspaceExist, UserExist);
+            return new Result(true, 200, 'Add user to workspace successful');
         }
         catch (error) {
             throw new customError(400, `WorkspaceService has error: ${error}`);
@@ -84,7 +94,21 @@ class WorkspaceService {
             if (!workspace) {
                 throw new customError(404, 'Workspace not found');
             }
-            await this.workspaceRepository.removeUserFromWorkspace(workspaceId, userId);
+
+            const WorkspaceExist = await this.workspaceRepository.findByWorkspaceId(workspaceId);
+            if (!WorkspaceExist) {
+                throw new customError(404, 'Workspace not found');
+            }
+            const UserExist = await userRepository.findByUserId(userId);
+            if (!UserExist) {
+                throw new customError(404, 'User not found');
+            }
+            const isUserInWorkspace = await this.workspaceRepository.findUserOfWorkspace(workspaceId, userId);
+            if (!isUserInWorkspace) {
+                throw new customError(409, 'User not in workspace');
+            }
+
+            await this.workspaceRepository.removeUserFromWorkspace(WorkspaceExist, UserExist);
             return new Result(true, 200, 'Remove user from workspace successful');
         }
         catch (error) {
@@ -104,7 +128,7 @@ class WorkspaceService {
         }
     }
 
-    public async updateWorkspace(workspace: Workspace): Promise<Result> {
+    public async updateWorkspace(workspace: Partial<Workspace>): Promise<Result> {
         try {
             const updatedWorkspace = await this.workspaceRepository.updateWorkspace(workspace);
             if (!updatedWorkspace) {
@@ -133,12 +157,12 @@ class WorkspaceService {
         }
     }
 
-    public async getWorkspaceUsers(workspaceId: number): Promise<string[]> {
+    public async getWorkspaceUsers(workspaceId: number): Promise<User[]> {
         try {
             if (!workspaceId) {
                 throw new customError(400, 'No workspace id provided');
             }
-            const users : string[] = await this.workspaceRepository.getWorkspaceUsers(workspaceId);
+            const users : User[] = await this.workspaceRepository.getWorkspaceUsers(workspaceId);
             if (users.length === 0) {
                 throw new customError(404, 'No users found');
             }
@@ -158,21 +182,6 @@ class WorkspaceService {
                 throw new customError(404, 'No boards found');
             }
             return boards;
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    public async getWorkspaceByUserId(userId: number): Promise<Workspace[]> {
-        try {
-            if (!userId) {
-                throw new customError(400, 'No user id provided');
-            }
-            const workspaces = await this.workspaceRepository.getWorkspaceByUserId(userId);
-            if (workspaces.length === 0) {
-                throw new customError(404, 'No workspaces found');
-            }
-            return workspaces;
         } catch (error) {
             throw error;
         }

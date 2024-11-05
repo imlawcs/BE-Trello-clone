@@ -238,6 +238,21 @@ class UserService {
             throw error;
         }
     }
+
+    async getWorkspacesOfUser(userId: number): Promise<any> {
+        try {
+            if (!userId) {
+                throw new customError(400, 'No user id provided');
+            }
+            const workspaces : any = await UserRepository.getWorkspaceByUserId(userId);
+            if (workspaces.length === 0) {
+                throw new customError(404, 'No workspaces found');
+            }
+            return workspaces;
+        } catch (error) {
+            throw error;
+        }
+    }
 }
 
 const userService = new UserService();

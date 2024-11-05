@@ -17,4 +17,11 @@ export enum Permission {
     GET_PERMISSION = 'get-permission',
     UPDATE_PERMISSION = 'update-permission',
     DELETE_PERMISSION = 'delete-permission',
+
+    CREATE_WORKSPACE = 'create-workspace',
+    GET_WORKSPACE = 'get-workspace',
+    UPDATE_WORKSPACE = 'update-workspace',
+    DELETE_WORKSPACE = 'delete-workspace',
+    ADD_USER_TO_WORKSPACE = 'add-user-to-workspace',
+    REMOVE_USER_FROM_WORKSPACE = 'remove-user-from-workspace',
 }

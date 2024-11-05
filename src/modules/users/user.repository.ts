@@ -2,6 +2,7 @@ import { dbSource } from "../../config/ormconfig";
 import { User } from "../../database/entities/user";
 import { Role } from "../../database/entities/role";
 import customError from "../../common/error/customError";
+import { Workspace } from "../../database/entities/workspace";
 
 class UserRepository {
     private readonly userRepository = dbSource.getRepository(User); 
@@ -112,6 +113,24 @@ class UserRepository {
                 relations: ["roles", "roles.permissions"],
             });
             return user?.roles.map(role => role.permissions.map(permission => permission.name)).flat() || [];
+        }
+        catch (error) {
+            throw new customError(400, `UserRepository has error: ${error}`);
+        }
+    }
+
+    public async getWorkspaceByUserId(userId: number): Promise<Workspace[]> {
+        try {
+            const user = await this.userRepository.findOne({
+                where: {
+                    id: userId,
+                },
+                relations: ["workspaces"],
+            });
+            if (!user?.workspaces) {
+                throw new customError(404, `User with ID ${userId} has no workspaces.`);
+            }
+            return user?.workspaces;
         }
         catch (error) {
             throw new customError(400, `UserRepository has error: ${error}`);

@@ -99,6 +99,16 @@ class UserController {
             next(error);
         }
     }
+
+    async getWorkspacesOfUser(req: Request, res: Response, next: NextFunction) {
+        try {
+            const userId = Number(req.params.id);
+            const workspaces = await service.getWorkspacesOfUser(userId);
+            res.status(200).json(workspaces);
+        } catch (error) {
+            next(error);
+        }
+    }
 }
 
 export default new UserController();

@@ -2,7 +2,6 @@ import { dbSource } from "../../config/ormconfig";
 import { Role } from "../../database/entities/role";
 import { Permission } from "../../database/entities/permission";
 import customError from "../../common/error/customError";
-import { log } from "console";
 
 class RoleRepository {
     private readonly roleRepository = dbSource.getRepository(Role);

@@ -5,6 +5,7 @@ import { registerSchema, loginSchema } from '../schemas/auth.schema';
 import RoleSchema from '../schemas/role.schema';
 import { permissionSchema } from '../schemas/permission.schema';
 import Userschema from '../schemas/user.schema';
+import WorkspaceSchema from '../schemas/workspace.schema';
 
 
 class ValidateMiddleware {
@@ -102,6 +103,42 @@ class ValidateMiddleware {
     async validateUpdatePermission(req: Request, res: Response, next: NextFunction) {
         try {
             await permissionSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateCreateWorkspace(req: Request, res: Response, next: NextFunction) {
+        try {
+            await WorkspaceSchema.workspaceCreateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateUpdateWorkspace(req: Request, res: Response, next: NextFunction) {
+        try {
+            await WorkspaceSchema.workspaceUpdateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateAddUserToWorkspace(req: Request, res: Response, next: NextFunction) {
+        try {
+            await WorkspaceSchema.addUserToWorkspaceSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateRemoveUserFromWorkspace(req: Request, res: Response, next: NextFunction) {
+        try {
+            await WorkspaceSchema.removeUserFromWorkspaceSchema.validateAsync(req.body, { abortEarly: false });
             next();
         } catch (error : any) {
             next(new CustomError(StatusCodes.BAD_REQUEST, error.message));

@@ -15,6 +15,6 @@ router.post("/assign-role", auth.authenticateToken, validate.validateAssignRole,
 router.post("/remove-role", auth.authenticateToken, validate.validateRemoveRole, rbac.checkPermission(Permission.REMOVE_ROLE), controller.removeRole);
 router.get("/get-permissions/:id?", auth.authenticateToken, rbac.checkPermission(Permission.GET_PERMISSION), controller.getPermissionsOfUser);
 router.get("/get-roles/:id?", auth.authenticateToken, rbac.checkPermission(Permission.GET_ROLE), controller.getRolesOfUser);
-
+router.get("/get-workspaces/:id?", auth.authenticateToken, rbac.checkPermission(Permission.GET_WORKSPACE), controller.getWorkspacesOfUser);
 
 export default router;
