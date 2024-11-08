@@ -6,6 +6,8 @@ import RoleSchema from '../schemas/role.schema';
 import { permissionSchema } from '../schemas/permission.schema';
 import Userschema from '../schemas/user.schema';
 import WorkspaceSchema from '../schemas/workspace.schema';
+import boardSchema from '../schemas/board.schema';
+import listSchema from '../schemas/list.schema';
 
 
 class ValidateMiddleware {
@@ -109,14 +111,6 @@ class ValidateMiddleware {
         }
     }
 
-    async validateCreateWorkspace(req: Request, res: Response, next: NextFunction) {
-        try {
-            await WorkspaceSchema.workspaceCreateSchema.validateAsync(req.body, { abortEarly: false });
-            next();
-        } catch (error : any) {
-            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
-        }
-    }
 
     async validateUpdateWorkspace(req: Request, res: Response, next: NextFunction) {
         try {
@@ -144,6 +138,88 @@ class ValidateMiddleware {
             next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
         }
     }
+
+    async validateCreateWorkspace(req: Request, res: Response, next: NextFunction) {
+        try {
+            await WorkspaceSchema.workspaceCreateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateCreateBoard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await boardSchema.boardCreateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateUpdateBoard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await boardSchema.boardUpdateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateCreateList(req: Request, res: Response, next: NextFunction) {
+        try {
+            await listSchema.listCreateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateUpdateList(req: Request, res: Response, next: NextFunction) {
+        try {
+            await listSchema.listUpdateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateAddListToBoard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await boardSchema.addListSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateRemoveListFromBoard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await boardSchema.removeListSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateAddCardToList(req: Request, res: Response, next: NextFunction) {
+        try {
+            await listSchema.addCardSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateRemoveCardFromList(req: Request, res: Response, next: NextFunction) {
+        try {
+            await listSchema.removeCardSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
 }
 
 export default new ValidateMiddleware()

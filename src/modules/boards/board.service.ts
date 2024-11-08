@@ -1,4 +1,5 @@
 import boardRepository from "./board.repository";
+import listRepository from "../lists/list.repository";
 import { Board } from "../../database/entities/board";
 import customError from "../../common/error/customError";
 import { Result } from "../../common/response/Result";
@@ -103,15 +104,24 @@ class BoardService {
         }
     }
 
-    public async addListToBoard(id: number, listId: number): Promise<Result> {
+    public async addListToBoard(boardId: number, listId: number): Promise<Result> {
         try {
-            if (!id) {
-                throw new customError(400, "Id is required");
+            if (!boardId) {
+                throw new customError(400, "Board id is required");
             }
             if (!listId) {
                 throw new customError(400, "List id is required");
             }
-            await boardRepository.addListToBoard(id, listId);
+            const boardExist = await boardRepository.findByBoardId(boardId);
+            if (!boardExist) {
+                throw new customError(404, "Board not found");
+            }
+            const listExist = await listRepository.findByListId(listId);
+            if (!listExist) {
+                throw new customError(404, "List not found");
+            }
+            const isListInBoard = await boardRepository.isListInBoard(listId, boardId);
+            await boardRepository.addListToBoard(boardId, listId);
             return new Result(true, 200, "Add list to board successful");
         } catch (error) {
             throw error;

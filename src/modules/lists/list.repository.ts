@@ -1,10 +1,7 @@
 import { dbSource } from "../../config/ormconfig";
 import { List } from "../../database/entities/list";
 import customError from "../../common/error/customError";
-import { Board } from "../../database/entities/board";
 import { Card } from "../../database/entities/card";
-import e from "express";
-import { custom } from "joi";
 
 class ListRepository {
     private readonly listRepository = dbSource.getRepository(List);
@@ -68,7 +65,7 @@ class ListRepository {
         }
     }
 
-    public async updateList(id: number, list: List): Promise<void> {
+    public async updateList(id: number, list: Partial<List>): Promise<void> {
         try {
             const listExist = await this.listRepository.findOne(
                 {
@@ -122,7 +119,30 @@ class ListRepository {
         }
     }
 
-    // public async inCardInList()
+    public async isCardInList(list: List, card: Card): Promise<boolean> {
+        try {
+            const listExist = await this.listRepository.findOne({
+                where: {
+                    id: list.id,
+                },
+                relations: ["cards"],
+            });
+            if (!listExist) {
+                throw new customError(404, "List not found");
+            }
+            const cardExist = await dbSource.getRepository(Card).findOne({
+                where: {
+                    id: card.id,
+                },
+            });
+            if (!cardExist) {
+                throw new customError(404, "Card not found");
+            }
+            return list.cards.some(c => c.id === card.id);
+        } catch (error) {
+            throw new customError(400, `ListRepository has error: ${error}`);
+        }
+    }
 
     public async addCardToList(list: List, card: Card): Promise<void> {
         try {
@@ -170,7 +190,7 @@ class ListRepository {
                 throw new customError(404, "List not found");
             }
 
-            // await this.listRepository.filter
+            list.cards = list.cards.filter(c => c.id !== card.id);
         }   
         catch(error) {
             throw new customError(400, `ListRepository has error: ${error}`);

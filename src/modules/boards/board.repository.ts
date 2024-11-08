@@ -119,7 +119,30 @@ class BoardRepository {
         }
     }
 
-    // public async isListInBoard
+    public async isListInBoard(listId: number, boardId: number): Promise<boolean> {
+        try {
+            const board = await this.boardRepository.findOne({
+                where: {
+                    id: boardId,
+                },
+                relations: ["lists"],
+            });
+            if (!board) {
+                throw new customError(400, `BoardRepository has error: Board does not exist`);
+            }
+            const list = await dbSource.getRepository(List).findOne({
+                where: {
+                    id: listId,
+                },
+            });
+            if (!list) {
+                throw new customError(400, `BoardRepository has error: List does not exist`);
+            }
+            return board.lists.some(item => item.id === listId);
+        } catch (error) {
+            throw new customError(400, `BoardRepository has error: ${error}`);
+        }
+    }
 
     public async addListToBoard(boardId: number, listId: number): Promise<void> {
         try {
