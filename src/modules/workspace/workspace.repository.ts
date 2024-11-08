@@ -3,6 +3,7 @@ import { Workspace } from "../../database/entities/workspace";
 import { User } from "../../database/entities/user";
 import { Board } from "../../database/entities/board";
 import customError from "../../common/error/customError";
+import { any } from "joi";
 
 class WorkspaceRepository {
     private readonly workspaceRepository = dbSource.getRepository(Workspace); 
@@ -68,10 +69,9 @@ class WorkspaceRepository {
         }
     }
 
-    public async updateWorkspace(workspace: Partial<Workspace>): Promise<Workspace> {
+    public async updateWorkspace(id: number, workspace: Partial<Workspace>): Promise<void> {
         try {
-            const updatedWorkspace = await this.workspaceRepository.save(workspace);
-            return updatedWorkspace;
+            await this.workspaceRepository.update(id, workspace);
         } catch (error) {
             throw new customError(400, `WorkspaceRepository has error: ${error}`);
         }
@@ -147,7 +147,7 @@ class WorkspaceRepository {
         }
     }
 
-    public async getWorkspaceUsers(workspaceId: number): Promise<User[]> {
+    public async getWorkspaceUsers(workspaceId: number): Promise<any[]> {
         try {
             const workspace = await this.workspaceRepository.findOne({
                 where: {
@@ -158,7 +158,12 @@ class WorkspaceRepository {
             if (!workspace?.users) {
                 throw new customError(404, 'No users found');
             }
-            return workspace?.users;
+            const User : any[] = workspace?.users.map(user => ({
+                id: user.id,
+                username: user.username,
+                email: user.email,
+            }));
+            return User;
         } catch (error) {
             throw new customError(400, `WorkspaceRepository has error: ${error}`);
         }

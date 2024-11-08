@@ -8,13 +8,13 @@ class ListService {
     public async findAllList(): Promise<List[]> {
         try {
             const list = await listRepository.findAllList();
-            if (!list) {
+            if (list.length === 0) {
                 throw new customError(404, "List not found");
             }
             return list;
 
         } catch (error) {
-            throw new customError(400, `ListService has error: ${error}`);
+            throw error;
         }
     }
 
@@ -29,7 +29,7 @@ class ListService {
             }
             return list;
         } catch (error) {
-            throw new customError(400, `ListService has error: ${error}`);
+            throw error;
         }
     }
 
@@ -44,7 +44,7 @@ class ListService {
             }
             return list;
         } catch (error) {
-            throw new customError(400, `ListService has error: ${error}`);
+            throw error;
         }
     }
 
@@ -53,7 +53,7 @@ class ListService {
             const newList = await listRepository.createList(list);
             return new Result( true, 201, "Create list successfully", newList);
         } catch (error) {
-            throw new customError(400, `ListService has error: ${error}`);
+            throw error;
         }
     }
 
@@ -69,7 +69,7 @@ class ListService {
             await listRepository.updateList(id, list);
             return new Result( true, 200, "Update list successfully");
         } catch (error) {
-            throw new customError(400, `ListService has error: ${error}`);
+            throw error;
         }
     }
 
@@ -85,7 +85,7 @@ class ListService {
             await listRepository.deleteList(id);
             return new Result( true, 200, "Delete list successfully");
         } catch (error) {
-            throw new customError(400, `ListService has error: ${error}`);
+            throw error;
         }
     }
 
@@ -112,7 +112,7 @@ class ListService {
             await listRepository.addCardToList(listExist, cardExist);
             return new Result( true, 200, "Add card to list successfully");
         } catch (error) {
-            throw new customError(400, `ListService has error: ${error}`);
+            throw error;
         }
     }
 
@@ -126,9 +126,12 @@ class ListService {
                 throw new customError(404, "List not found");
             }
             const cards = await listRepository.getListCards(id);
+            if(cards.length === 0) {
+                throw new customError(404, "List has no card");
+            }
             return new Result( true, 200, "Get list cards successfully", cards);
         } catch (error) {
-            throw new customError(400, `ListService has error: ${error}`);
+            throw error;
         }
     }
 
@@ -155,7 +158,7 @@ class ListService {
             await listRepository.removeCardFromList(listExist, cardExist);
             return new Result( true, 200, "Remove card from list successfully");
         } catch (error) {
-            throw new customError(400, `ListService has error: ${error}`);
+            throw error;
         }
     }
 }

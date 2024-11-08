@@ -2,21 +2,23 @@ import Joi from "joi";
 
 class BoardSchema {
     public boardCreateSchema = Joi.object({
-        name: Joi.string().required(),
+        title: Joi.string().required(),
+        description: Joi.string().required().allow(''),
     });
 
     public boardUpdateSchema = Joi.object({
-        name: Joi.string().required(),
+        title: Joi.string(),
+        description: Joi.string().allow(''),
     });
 
     public addListSchema = Joi.object({
-        listId: Joi.string().required(),
-        boardId: Joi.string().required(),
+        listId: Joi.number().required(),
+        boardId: Joi.number().required(),
     });
 
     public removeListSchema = Joi.object({
-        listId: Joi.string().required(),
-        boardId: Joi.string().required(),
+        listId: Joi.number().required(),
+        boardId: Joi.number().required(),
     });
 }
 

@@ -44,7 +44,7 @@ class AuthService {
                 cards: [],
                 comments: [],
                 notifications: [],
-                workspaces: [],
+                workspaces: []
             }
 
             await userRepository.create(newUser);

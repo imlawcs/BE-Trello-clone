@@ -3,7 +3,7 @@ import Joi from "joi";
 
 class WorkspaceSchema {
     workspaceCreateSchema = Joi.object({
-        name: Joi.string()
+        title: Joi.string()
             .min(3)
             .max(50)
             .required(),
@@ -11,15 +11,17 @@ class WorkspaceSchema {
             .min(3)
             .max(255)
             .required()
+            .allow('')
     });
 
     workspaceUpdateSchema = Joi.object({
-        name: Joi.string()
+        title: Joi.string()
             .min(3)
             .max(50),
         description: Joi.string()
             .min(3)
             .max(255)
+            .allow('')
     });
 
     addUserToWorkspaceSchema = Joi.object({

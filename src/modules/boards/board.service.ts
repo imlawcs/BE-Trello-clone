@@ -9,7 +9,7 @@ class BoardService {
     public async findAllBoard(): Promise<Result> {
         try {
             const boards = await boardRepository.findAllBoard();
-            if (!boards) {
+            if (boards.length === 0) {
                 throw new customError(404, "Boards not found");
             }
             return new Result(true, 200, "Get boards successful", boards);
@@ -71,7 +71,7 @@ class BoardService {
                 throw new customError(400, "Board is required");
             }
             await boardRepository.updateBoard(id, board);
-            return new Result(true, 200, "Update board successful", board);
+            return new Result(true, 200, "Update board successful");
         } catch (error) {
             throw error;
         }
@@ -95,7 +95,7 @@ class BoardService {
                 throw new customError(400, "Id is required");
             }
             const lists = await boardRepository.getBoardLists(id);
-            if (!lists) {
+            if (lists.length === 0) {
                 throw new customError(404, "Lists not found");
             }
             return new Result(true, 200, "Get board lists successful", lists);

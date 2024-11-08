@@ -7,9 +7,6 @@ import { Workspace } from "./workspace";
 
 @Entity()
 export class User {
-    map(arg0: (user: any) => any): any {
-        throw new Error("Method not implemented.");
-    }
     @PrimaryGeneratedColumn()
     id?: number
     @Column({length: 100})

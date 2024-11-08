@@ -35,7 +35,7 @@ class WorkspaceService {
             return workspace;
         }
         catch (error) {
-            throw new customError(400, `WorkspaceService has error: ${error}`);
+            throw error;
         }
     }
 
@@ -52,7 +52,7 @@ class WorkspaceService {
             return workspace;
         }
         catch (error) {
-            throw new customError(400, `WorkspaceService has error: ${error}`);
+            throw error;
         }
     }
 
@@ -81,7 +81,7 @@ class WorkspaceService {
             return new Result(true, 200, 'Add user to workspace successful');
         }
         catch (error) {
-            throw new customError(400, `WorkspaceService has error: ${error}`);
+            throw error;
         }
     }
 
@@ -112,7 +112,7 @@ class WorkspaceService {
             return new Result(true, 200, 'Remove user from workspace successful');
         }
         catch (error) {
-            throw new customError(400, `WorkspaceService has error: ${error}`);
+            throw error;
         }
     }
 
@@ -128,13 +128,13 @@ class WorkspaceService {
         }
     }
 
-    public async updateWorkspace(workspace: Partial<Workspace>): Promise<Result> {
+    public async updateWorkspace(id: number, workspace: Partial<Workspace>): Promise<Result> {
         try {
-            const updatedWorkspace = await this.workspaceRepository.updateWorkspace(workspace);
-            if (!updatedWorkspace) {
-                throw new customError(400, 'Update workspace failed');
+            if (!id) {
+                throw new customError(400, 'No workspace id provided');
             }
-            return new Result(true, 200, 'Update workspace successful', { workspace: updatedWorkspace });
+            const updatedWorkspace = await this.workspaceRepository.updateWorkspace(id, workspace);
+            return new Result(true, 200, 'Update workspace successful');
         } catch (error) {
             throw error;
         }

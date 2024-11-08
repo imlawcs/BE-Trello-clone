@@ -67,8 +67,9 @@ class WorkspaceController {
 
     public async updateWorkspace(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
+            const id = Number(req.params.id);
             const workspace: Partial<Workspace> = req.body;
-            const result: Result = await workspaceService.updateWorkspace(workspace);
+            const result: Result = await workspaceService.updateWorkspace(id, workspace);
             res.status(result.status).send(result);
         } catch (error) {
             next(error);

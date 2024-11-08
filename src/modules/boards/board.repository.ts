@@ -75,7 +75,7 @@ class BoardRepository {
             });
             if (!boardExist)
                 throw new customError(400, `BoardRepository has error: Board does not exist`);            
-            await this.boardRepository.save(board);
+            await this.boardRepository.update(boardId, board);
         } catch (error) {
             throw new customError(400, `BoardRepository has error: ${error}`);
         }

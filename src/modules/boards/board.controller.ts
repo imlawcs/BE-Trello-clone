@@ -67,8 +67,8 @@ class BoardController {
 
     public async addListToBoard(req: Request, res: Response, next: NextFunction) {
         try {
-            const boardId = parseInt(req.params.boardId);
-            const listId = parseInt(req.params.listId);
+            const boardId = parseInt(req.body.boardId);
+            const listId = parseInt(req.body.listId);
             const result = await boardService.addListToBoard(boardId, listId);
             res.status(result.status).json(result);
         } catch (error) {
@@ -78,8 +78,8 @@ class BoardController {
 
     public async removeListFromBoard(req: Request, res: Response, next: NextFunction) {
         try {
-            const boardId = parseInt(req.params.boardId);
-            const listId = parseInt(req.params.listId);
+            const boardId = parseInt(req.body.boardId);
+            const listId = parseInt(req.body.listId);
             const result = await boardService.removeListFromBoard(boardId, listId);
             res.status(result.status).json(result);
         } catch (error) {

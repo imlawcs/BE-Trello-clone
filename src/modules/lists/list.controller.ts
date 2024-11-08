@@ -46,8 +46,8 @@ class ListController {
         try {
             const id = parseInt(req.params.id);
             const list = req.body as Partial<List>;
-            await listService.updateList(id, list);
-            res.status(204).end();
+            const result = await listService.updateList(id, list);
+            res.status(200).json(result);
         } catch (error) {
             next(error);
         }
@@ -56,8 +56,8 @@ class ListController {
     public async deleteList(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const id = parseInt(req.params.id);
-            await listService.deleteList(id);
-            res.status(204).end();
+            const result = await listService.deleteList(id);
+            res.status(200).json(result);
         } catch (error) {
             next(error);
         }
@@ -75,10 +75,10 @@ class ListController {
 
     public async addCardToList(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const id = parseInt(req.params.id);
-            const cardId = parseInt(req.params.cardId);
-            await listService.addCardToList(id, cardId);
-            res.status(204).end();
+            const id = parseInt(req.body.id);
+            const cardId = parseInt(req.body.cardId);
+            const result = await listService.addCardToList(id, cardId);
+            res.status(201).json(result);
         } catch (error) {
             next(error);
         }
@@ -86,10 +86,10 @@ class ListController {
 
     public async removeCardFromList(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const id = parseInt(req.params.id);
-            const cardId = parseInt(req.params.cardId);
-            await listService.removeCardFromList(id, cardId);
-            res.status(204).end();
+            const id = parseInt(req.body.id);
+            const cardId = parseInt(req.body.cardId);
+            const result = await listService.removeCardFromList(id, cardId);
+            res.status(200).json(result);
         } catch (error) {
             next(error);
         }
