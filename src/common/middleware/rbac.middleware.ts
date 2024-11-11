@@ -5,7 +5,6 @@ class RbacMiddleware{
     checkPermission(permission: string){
         return async (req: Request, res: Response, next: NextFunction) => {
             const userId = Number(req.user.id);
-            console.log(userId);
             
             const userPermissions = await service.getPermissionsOfUser(userId);
             if(userPermissions.includes(permission)){

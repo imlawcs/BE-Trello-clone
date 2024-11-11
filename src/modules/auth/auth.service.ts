@@ -74,7 +74,6 @@ class AuthService {
                 throw new customError(404, 'Invalid username or password');
             }
 
-            console.log("Stored password hash:", userExist.password);
             const passwordMatch = await bcrypt.compare(user.password, userExist.password);
 
             if (!passwordMatch) 

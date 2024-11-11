@@ -16,7 +16,7 @@ class AuthMiddleware {
             return;
         }
         else {
-                return token;
+            return token;
         }
     }
 

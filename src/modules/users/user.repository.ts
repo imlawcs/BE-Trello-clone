@@ -3,30 +3,65 @@ import { User } from "../../database/entities/user";
 import { Role } from "../../database/entities/role";
 import customError from "../../common/error/customError";
 import { Workspace } from "../../database/entities/workspace";
+import redisClient from "../../config/redis";
+
+const expTime = 60 * 60 * 24; 
 
 class UserRepository {
     private readonly userRepository = dbSource.getRepository(User); 
 
+    // public async findAllUser(): Promise<any[]> {
+    //     try {
+    //         const users = await this.userRepository.find({
+    //             select: ["id", "email", "username", "fullname"],
+    //             relations: ["roles"], 
+    //         });
+
+    //         console.log('Users retrieved:', users);
+            
+    //         return users.map(user => ({
+    //             id: user.id,
+    //             email: user.email,
+    //             username: user.username,
+    //             fullname: user.fullname,
+    //             roles: user.roles.map(role => role.name), 
+    //         }));
+    //     } catch (error) {
+    //         throw new customError(400, `UserRepository has error: ${error}`);
+    //     }
+    // }    
+
     public async findAllUser(): Promise<any[]> {
         try {
+            const client = await redisClient.getInstance();
+
+            const usersCache = await client.get('allUsers');
+            if (usersCache) {
+                console.log('Cache hit for all users');
+                console.log(JSON.parse(usersCache));                
+                return JSON.parse(usersCache);
+            }
+
             const users = await this.userRepository.find({
                 select: ["id", "email", "username", "fullname"],
                 relations: ["roles"], 
             });
-
-            console.log('Users retrieved:', users);
             
-            return users.map(user => ({
+            const formattedUsers = users.map(user => ({
                 id: user.id,
                 email: user.email,
                 username: user.username,
                 fullname: user.fullname,
                 roles: user.roles.map(role => role.name), 
             }));
+
+            await client.setEx('allUsers', expTime, JSON.stringify(formattedUsers));
+
+            return formattedUsers;
         } catch (error) {
             throw new customError(400, `UserRepository has error: ${error}`);
         }
-    }    
+    }
 
     public async findByUsername(username: string): Promise<User | null> {
         try {
@@ -45,8 +80,34 @@ class UserRepository {
         }
     }
 
+    // public async findByUserId(id: number): Promise<User | null> {
+    //     try {
+    //         const user = await this.userRepository.findOne({
+    //             select: ["id", "email", "username", "fullname"],
+    //             where: {
+    //                 id,
+    //             },
+    //             relations: ["roles"],
+    //         });
+    //         user?.roles.map(role => role.name);
+    //         return user;
+    //     }
+    //     catch (error) {
+    //         throw new customError(400, `UserRepository has error: ${error}`);
+    //     }
+    // }
+    
     public async findByUserId(id: number): Promise<User | null> {
         try {
+            const client = await redisClient.getInstance();
+
+            const userCache = await client.get(`user:${id}`);
+            if (userCache) {
+                console.log(`Cache hit for user ${id}`);
+                console.log(JSON.parse(userCache));                
+                return JSON.parse(userCache);
+            }
+
             const user = await this.userRepository.findOne({
                 select: ["id", "email", "username", "fullname"],
                 where: {
@@ -54,31 +115,100 @@ class UserRepository {
                 },
                 relations: ["roles"],
             });
-            user?.roles.map(role => role.name);
+
+            if (!user) {
+                return null;
+            }
+
+            const roleNames = user.roles.map(role => role.name);
+
+            await client.setEx(`user:${id}`, expTime, JSON.stringify({
+                id: user.id,
+                email: user.email,
+                username: user.username,
+                fullname: user.fullname,
+                roles: roleNames,
+            }));
+
             return user;
-        }
-        catch (error) {
+        } catch (error) {
             throw new customError(400, `UserRepository has error: ${error}`);
         }
     }
+
+    // public async create(user: User): Promise<User> {
+    //     try {
+    //         return await this.userRepository.save(user);
+    //     }
+    //     catch (error) {
+    //         throw new customError(400, `UserRepository has error: ${error}`);
+    //     }
+    // }
 
     public async create(user: User): Promise<User> {
         try {
-            return await this.userRepository.save(user);
+            const savedUser = await this.userRepository.save(user);
+
+            const client = await redisClient.getInstance();
+
+            const usersCache = await client.get('allUsers');
+            let users = [];
+
+            if (usersCache) {
+                users = JSON.parse(usersCache);
+            }
+
+            users.push({
+                id: savedUser.id,
+                email: savedUser.email,
+                username: savedUser.username,
+                fullname: savedUser.fullname,
+                roles: savedUser.roles.map(role => role.name),
+            });
+
+            await client.setEx('allUsers', expTime, JSON.stringify(users));
+            console.log('Cache updated with new user.');
+
+            return savedUser;
         }
         catch (error) {
             throw new customError(400, `UserRepository has error: ${error}`);
         }
     }
 
-    public async update( userId: number, userData: Partial<User> ): Promise<void> {
+    // public async update( userId: number, userData: Partial<User> ): Promise<void> {
+    //     try {
+    //         await this.userRepository.update(userId, userData);
+    //     }
+    //     catch (error) {
+    //         throw new customError(400, `UserRepository has error: ${error}`);
+    //     }
+    // }
+
+    public async update(userId: number, userData: Partial<User>): Promise<void> {
         try {
             await this.userRepository.update(userId, userData);
-        }
-        catch (error) {
+    
+            const client = await redisClient.getInstance();
+    
+            const userCache = await client.get(`user:${userId}`);
+            
+            if (userCache) {
+                let cachedUser = JSON.parse(userCache);
+    
+                cachedUser = {
+                    ...cachedUser,
+                    ...userData, 
+                };
+    
+                await client.setEx(`user:${userId}`, expTime, JSON.stringify(cachedUser));
+                console.log(`Cache updated for user ${userId}`);
+            }
+    
+        } catch (error) {
             throw new customError(400, `UserRepository has error: ${error}`);
         }
-    }
+    }    
 
     public async delete(id: number): Promise<void> {
         try {
