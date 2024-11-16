@@ -6,6 +6,9 @@ import permissionRouter from '../modules/permissions/permission.router';
 import workspaceRouter from '../modules/workspace/workspace.router';
 import boardRouter from '../modules/boards/board.router';
 import listRouter from '../modules/lists/list.router';
+import cardRouter from '../modules/cards/card.router';
+import attachmentRouter from '../modules/attachments/attachment.router';
+import commentRouter from '../modules/comments/comment.router';
 import path from 'path';
 
 const app = express();
@@ -19,6 +22,9 @@ const routes = [
     { path: '/workspaces', route: workspaceRouter },
     { path: '/boards', route: boardRouter },
     { path: '/lists', route: listRouter },
+    { path: '/cards', route: cardRouter },
+    { path: '/attachments', route: attachmentRouter },
+    { path: '/comments', route: commentRouter },
 ];
 
 routes.forEach(({ path, route }) => {

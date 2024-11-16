@@ -9,7 +9,6 @@ import WorkspaceSchema from '../schemas/workspace.schema';
 import boardSchema from '../schemas/board.schema';
 import listSchema from '../schemas/list.schema';
 
-
 class ValidateMiddleware {
     async validateRegister(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
@@ -110,7 +109,6 @@ class ValidateMiddleware {
             next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
         }
     }
-
 
     async validateUpdateWorkspace(req: Request, res: Response, next: NextFunction) {
         try {
