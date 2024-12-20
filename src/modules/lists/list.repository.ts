@@ -58,8 +58,8 @@ class ListRepository {
 
     public async createList(list: List): Promise<List> {
         try {
-            await this.listRepository.save(list);
-            return list;
+            const newList : List = await this.listRepository.save(list);
+            return newList;
         } catch (error) {
             throw new customError(400, `ListRepository has error: ${error}`);
         }
@@ -119,11 +119,11 @@ class ListRepository {
         }
     }
 
-    public async isCardInList(list: List, card: Card): Promise<boolean> {
+    public async isCardInList(listId: number, cardId: number): Promise<boolean> {
         try {
             const listExist = await this.listRepository.findOne({
                 where: {
-                    id: list.id,
+                    id: listId,
                 },
                 relations: ["cards"],
             });
@@ -132,13 +132,13 @@ class ListRepository {
             }
             const cardExist = await dbSource.getRepository(Card).findOne({
                 where: {
-                    id: card.id,
+                    id: cardId,
                 },
             });
             if (!cardExist) {
                 throw new customError(404, "Card not found");
             }
-            return list.cards.some(c => c.id === card.id);
+            return listExist.cards.some(c => c.id === cardId);
         } catch (error) {
             throw new customError(400, `ListRepository has error: ${error}`);
         }

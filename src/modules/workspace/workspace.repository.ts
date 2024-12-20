@@ -185,6 +185,68 @@ class WorkspaceRepository {
             throw new customError(400, `WorkspaceRepository has error: ${error}`);
         }
     }
+
+    public async findBoardOfWorkspace(workspaceId: number, boardId: number): Promise<boolean> {
+        try {
+            const workspace = await this.workspaceRepository.findOne({
+                where: {
+                    id: workspaceId,
+                },
+                relations: ["boards"],
+            });
+
+            if (!workspace) {
+                throw new customError(404, 'Workspace not found');
+            }
+
+            workspace.boards = workspace.boards || [];
+            const hasBoard = workspace?.boards.some((board) => board.id === boardId);
+            return hasBoard;
+        } catch (error) {
+            throw new customError(400, `WorkspaceRepository has error: ${error}`);
+        }
+    }
+
+    public async addBoardToWorkspace(workspace : Workspace, board : Board): Promise<void> {
+        try {
+            if(!workspace.boards) {
+                const existingWorkspace = await this.workspaceRepository.findOne({
+                    where: { id: workspace.id },
+                    relations: ["boards"],
+                });
+
+                workspace.boards = existingWorkspace?.boards || [];
+            }
+
+            if(workspace.boards.some(b => b.id === board.id)) {
+                throw new customError(400, 'Board already in workspace');
+            }
+            else {
+                workspace.boards.push(board);
+                await this.workspaceRepository.save(workspace);
+            }
+        } catch (error) {
+            throw new customError(400, `WorkspaceRepository has error: ${error}`);
+        }
+    }
+
+    public async removeBoardFromWorkspace(workspace : Workspace, board : Board): Promise<void> {
+        try {
+            if(!workspace.boards) {
+                const existingWorkspace = await this.workspaceRepository.findOne({
+                    where: { id: workspace.id },
+                    relations: ["boards"],
+                });
+
+                workspace.boards = existingWorkspace?.boards || [];
+            }
+
+            workspace.boards = workspace.boards.filter(b => b.id !== board.id);
+            await this.workspaceRepository.save(workspace);
+        } catch (error) {
+            throw new customError(400, `WorkspaceRepository has error: ${error}`);
+        }
+    }
 }
 
 export default new WorkspaceRepository();

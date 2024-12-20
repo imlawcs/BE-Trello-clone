@@ -8,6 +8,12 @@ import Userschema from '../schemas/user.schema';
 import WorkspaceSchema from '../schemas/workspace.schema';
 import boardSchema from '../schemas/board.schema';
 import listSchema from '../schemas/list.schema';
+import cardSchema from '../schemas/card.schema';
+import attachSchema from '../schemas/attachment.schema';
+import commentSchema from '../schemas/comment.schema';
+import notificationSchema from '../schemas/notification.schema';
+import checklistSchema from '../schemas/checklist.schema';
+import activitySchema from '../schemas/activity.schema';
 
 class ValidateMiddleware {
     async validateRegister(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -164,6 +170,33 @@ class ValidateMiddleware {
         }
     }
 
+    async validateDeleteBoard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await boardSchema.boardDeleteSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateAddUserToBoard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await boardSchema.addUsersSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateRemoveUserFromBoard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await boardSchema.removeUsersSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
     async validateCreateList(req: Request, res: Response, next: NextFunction) {
         try {
             await listSchema.listCreateSchema.validateAsync(req.body, { abortEarly: false });
@@ -176,6 +209,15 @@ class ValidateMiddleware {
     async validateUpdateList(req: Request, res: Response, next: NextFunction) {
         try {
             await listSchema.listUpdateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateDeleteList(req: Request, res: Response, next: NextFunction) {
+        try {
+            await listSchema.listDeleteSchema.validateAsync(req.body, { abortEarly: false });
             next();
         } catch (error : any) {
             next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
@@ -218,6 +260,167 @@ class ValidateMiddleware {
         }
     }
 
+    async validateCreateCard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await cardSchema.cardCreateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateUpdateCard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await cardSchema.cardUpdateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateDeleteCard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await cardSchema.cardDeleteSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateAssignUserToCard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await cardSchema.assignUserSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateRemoveUserFromCard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await cardSchema.removeUserSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateAddCommentToCard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await cardSchema.addCommentSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateRemoveCommentFromCard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await cardSchema.removeCommentSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateAddAttachmentToCard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await cardSchema.addAttachmentSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateRemoveAttachmentFromCard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await cardSchema.removeAttachmentSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateCreateAttachment(req: Request, res: Response, next: NextFunction) {
+        try {
+            await attachSchema.attachmentCreateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateUpdateAttachment(req: Request, res: Response, next: NextFunction) {
+        try {
+            await attachSchema.attachmentUpdateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateCreateComment(req: Request, res: Response, next: NextFunction) {
+        try {
+            await commentSchema.commentCreateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateUpdateComment(req: Request, res: Response, next: NextFunction) {
+        try {
+            await commentSchema.commentUpdateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateCreateNotification(req: Request, res: Response, next: NextFunction) {
+        try {
+            await notificationSchema.createNotification.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateCreateChecklist(req: Request, res: Response, next: NextFunction) {
+        try {
+            await checklistSchema.checklistCreateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateUpdateChecklist(req: Request, res: Response, next: NextFunction) {
+        try {
+            await checklistSchema.checklistUpdateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateDeleteChecklist(req: Request, res: Response, next: NextFunction) {
+        try {
+            await checklistSchema.checklistDeleteSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateCreateActivity(req: Request, res: Response, next: NextFunction) {
+        try {
+            await activitySchema.activityCreateSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
 }
 
 export default new ValidateMiddleware()

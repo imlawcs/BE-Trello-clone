@@ -9,6 +9,9 @@ import listRouter from '../modules/lists/list.router';
 import cardRouter from '../modules/cards/card.router';
 import attachmentRouter from '../modules/attachments/attachment.router';
 import commentRouter from '../modules/comments/comment.router';
+import notificationRouter from '../modules/notifications/notification.router';
+import checklistRouter from '../modules/checklists/checklist.router';
+import activityRouter from '../modules/activitylogs/activity.router';
 import path from 'path';
 
 const app = express();
@@ -25,6 +28,9 @@ const routes = [
     { path: '/cards', route: cardRouter },
     { path: '/attachments', route: attachmentRouter },
     { path: '/comments', route: commentRouter },
+    { path: '/notifications', route: notificationRouter },
+    { path: '/checklists', route: checklistRouter },
+    { path: '/activitylogs', route: activityRouter }
 ];
 
 routes.forEach(({ path, route }) => {

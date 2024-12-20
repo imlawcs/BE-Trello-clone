@@ -10,28 +10,28 @@ const expTime = 60 * 60 * 24;
 class UserRepository {
     private readonly userRepository = dbSource.getRepository(User); 
 
-    // public async findAllUser(): Promise<any[]> {
-    //     try {
-    //         const users = await this.userRepository.find({
-    //             select: ["id", "email", "username", "fullname"],
-    //             relations: ["roles"], 
-    //         });
-
-    //         console.log('Users retrieved:', users);
-            
-    //         return users.map(user => ({
-    //             id: user.id,
-    //             email: user.email,
-    //             username: user.username,
-    //             fullname: user.fullname,
-    //             roles: user.roles.map(role => role.name), 
-    //         }));
-    //     } catch (error) {
-    //         throw new customError(400, `UserRepository has error: ${error}`);
-    //     }
-    // }    
-
     public async findAllUser(): Promise<any[]> {
+        try {
+            const users = await this.userRepository.find({
+                select: ["id", "email", "username", "fullname"],
+                relations: ["roles"], 
+            });
+
+            console.log('Users retrieved:', users);
+            
+            return users.map(user => ({
+                id: user.id,
+                email: user.email,
+                username: user.username,
+                fullname: user.fullname,
+                roles: user.roles.map(role => role.name), 
+            }));
+        } catch (error) {
+            throw new customError(400, `UserRepository has error: ${error}`);
+        }
+    }    
+
+    public async findAllUserRedis(): Promise<any[]> {
         try {
             const client = await redisClient.getInstance();
 
@@ -80,24 +80,24 @@ class UserRepository {
         }
     }
 
-    // public async findByUserId(id: number): Promise<User | null> {
-    //     try {
-    //         const user = await this.userRepository.findOne({
-    //             select: ["id", "email", "username", "fullname"],
-    //             where: {
-    //                 id,
-    //             },
-    //             relations: ["roles"],
-    //         });
-    //         user?.roles.map(role => role.name);
-    //         return user;
-    //     }
-    //     catch (error) {
-    //         throw new customError(400, `UserRepository has error: ${error}`);
-    //     }
-    // }
-    
     public async findByUserId(id: number): Promise<User | null> {
+        try {
+            const user = await this.userRepository.findOne({
+                select: ["id", "email", "username", "fullname"],
+                where: {
+                    id,
+                },
+                relations: ["roles"],
+            });
+            user?.roles.map(role => role.name);
+            return user;
+        }
+        catch (error) {
+            throw new customError(400, `UserRepository has error: ${error}`);
+        }
+    }
+    
+    public async findByUserIdRedis(id: number): Promise<User | null> {
         try {
             const client = await redisClient.getInstance();
 
@@ -136,16 +136,16 @@ class UserRepository {
         }
     }
 
-    // public async create(user: User): Promise<User> {
-    //     try {
-    //         return await this.userRepository.save(user);
-    //     }
-    //     catch (error) {
-    //         throw new customError(400, `UserRepository has error: ${error}`);
-    //     }
-    // }
-
     public async create(user: User): Promise<User> {
+        try {
+            return await this.userRepository.save(user);
+        }
+        catch (error) {
+            throw new customError(400, `UserRepository has error: ${error}`);
+        }
+    }
+
+    public async createRedis(user: User): Promise<User> {
         try {
             const savedUser = await this.userRepository.save(user);
 
@@ -176,16 +176,16 @@ class UserRepository {
         }
     }
 
-    // public async update( userId: number, userData: Partial<User> ): Promise<void> {
-    //     try {
-    //         await this.userRepository.update(userId, userData);
-    //     }
-    //     catch (error) {
-    //         throw new customError(400, `UserRepository has error: ${error}`);
-    //     }
-    // }
+    public async update( userId: number, userData: Partial<User> ): Promise<void> {
+        try {
+            await this.userRepository.update(userId, userData);
+        }
+        catch (error) {
+            throw new customError(400, `UserRepository has error: ${error}`);
+        }
+    }
 
-    public async update(userId: number, userData: Partial<User>): Promise<void> {
+    public async updateRedis(userId: number, userData: Partial<User>): Promise<void> {
         try {
             await this.userRepository.update(userId, userData);
     
@@ -242,6 +242,48 @@ class UserRepository {
                 },
                 relations: ["roles", "roles.permissions"],
             });
+            return user?.roles.map(role => role.permissions.map(permission => permission.name)).flat() || [];
+        }
+        catch (error) {
+            throw new customError(400, `UserRepository has error: ${error}`);
+        }
+    }
+
+    public async getPermissionsOfUserInWorkspace(userId: number, workspaceId: number): Promise<string[]> {
+        try {
+            const user = await this.userRepository.findOne({
+                where: {
+                    id: userId,
+                },
+                relations: ["roles", "roles.permissions", "workspaces"],
+            });
+
+            const workspace = user?.workspaces.find(workspace => workspace.id === workspaceId);
+            if (!workspace) {
+                throw new customError(404, `Workspace with ID ${workspaceId} not found.`);
+            }
+
+            return user?.roles.map(role => role.permissions.map(permission => permission.name)).flat() || [];
+        }
+        catch (error) {
+            throw new customError(400, `UserRepository has error: ${error}`);
+        }
+    }
+
+    public async getPermissionsOfUserInBoard(userId: number, boardId: number): Promise<string[]> {
+        try {
+            const user = await this.userRepository.findOne({
+                where: {
+                    id: userId,
+                },
+                relations: ["roles", "roles.permissions", "workspaces", "workspaces.boards"],
+            });
+
+            const board = user?.workspaces.flatMap(workspace => workspace.boards).find(board => board.id === boardId);
+            if (!board) {
+                throw new customError(404, `Board with ID ${boardId} not found.`);
+            }
+
             return user?.roles.map(role => role.permissions.map(permission => permission.name)).flat() || [];
         }
         catch (error) {

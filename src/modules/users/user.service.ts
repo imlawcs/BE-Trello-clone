@@ -253,6 +253,36 @@ class UserService {
             throw error;
         }
     }
+
+    async getPermissionsOfUserInWorkspace(userId: number, workspaceId: number): Promise<string[]> {
+        try {
+            if (!userId || !workspaceId) {
+                throw new customError(400, 'No user id or workspace id provided');
+            }
+            const permissions : string[] = await UserRepository.getPermissionsOfUserInWorkspace(userId, workspaceId);
+            if (permissions.length === 0) {
+                throw new customError(404, 'No permissions found');
+            }
+            return permissions;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async getPermissionsOfUserInBoard(userId: number, boardId: number): Promise<string[]> {
+        try {
+            if (!userId || !boardId) {
+                throw new customError(400, 'No user id or board id provided');
+            }
+            const permissions : string[] = await UserRepository.getPermissionsOfUserInBoard(userId, boardId);
+            if (permissions.length === 0) {
+                throw new customError(404, 'No permissions found');
+            }
+            return permissions;
+        } catch (error) {
+            throw error;
+        }
+    }
 }
 
 const userService = new UserService();

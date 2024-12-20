@@ -11,12 +11,28 @@ class CommentRepository {
                     where: {
                         id,
                     },
+                    relations: ["user"],
                 }
             );
             return comment;
         } catch (error) {
             throw new customError(400, `CommentRepository has error: ${error}`);
         }
+    }
+
+    public async getCommentOwner(commentId: number) {
+    
+        const comment = await dbSource.getRepository(Comment).findOne({
+            where: { id: commentId },
+            relations: ["user"],
+        });
+    
+        if (!comment) {
+            throw new Error("Comment not found");
+        }
+    
+        console.log("Comment belongs to user:", comment.user);
+        return comment.user;
     }
 
     public async createComment(comment: Comment): Promise<Comment> {

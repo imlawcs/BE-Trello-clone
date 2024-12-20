@@ -1,5 +1,6 @@
 import listRepository from "./list.repository";
 import cardRepository from "../cards/card.repository";
+import boardService from "../boards/board.service";
 import { List } from "../../database/entities/list";
 import customError from "../../common/error/customError";
 import { Result } from "../../common/response/Result";
@@ -48,9 +49,13 @@ class ListService {
         }
     }
 
-    public async createList(list: List): Promise<Result> {
+    public async createList(list: List, boardId: number): Promise<Result> {
         try {
+            if (!boardId) {
+                throw new customError(400, "Board id is required");
+            }
             const newList = await listRepository.createList(list);
+            await boardService.addListToBoard(boardId, newList.id);
             return new Result( true, 201, "Create list successfully", newList);
         } catch (error) {
             throw error;
@@ -104,7 +109,7 @@ class ListService {
                 throw new customError(404, "Card not found");
             }
 
-            const isCardInList = await listRepository.isCardInList(listExist, cardExist);
+            const isCardInList = await listRepository.isCardInList(listId, cardId);
             if (isCardInList) {
                 throw new customError(400, "Card is already in list");
             }

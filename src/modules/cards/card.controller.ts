@@ -10,7 +10,7 @@ class CardController {
             const cards = await cardService.findAllCard();
             res.status(200).json(cards);
         } catch (error) {
-            next(new customError(400, `CardController has error: ${error}`));
+            next(error);
         }
     }
 
@@ -20,7 +20,7 @@ class CardController {
             const card = await cardService.findByName(name);
             res.status(200).json(card);
         } catch (error) {
-            next(new customError(400, `CardController has error: ${error}`));
+            next(error);
         }
     }
 
@@ -30,17 +30,18 @@ class CardController {
             const card = await cardService.findCardById(id);
             res.status(200).json(card);
         } catch (error) {
-            next(new customError(400, `CardController has error: ${error}`));
+            next(error);
         }
     }
 
     public async createCard(req: Request, res: Response, next: NextFunction) {
         try {
             const card: Card = req.body;
-            const newCard = await cardService.createCard(card);
-            res.status(201).json(newCard);
+            const listId = parseInt(req.body.listId);
+            const result = await cardService.createCard(card, listId);
+            res.status(201).json(result);
         } catch (error) {
-            next(new customError(400, `CardController has error: ${error}`));
+            next(error);
         }
     }
 
@@ -51,7 +52,7 @@ class CardController {
             const result = await cardService.updateCard(id, card);
             res.status(200).json(result);
         } catch (error) {
-            next(new customError(400, `CardController has error: ${error}`));
+            next(error);
         }
     }
 
@@ -61,7 +62,7 @@ class CardController {
             const result = await cardService.deleteCard(id);
             res.status(200).json(result);
         } catch (error) {
-            next(new customError(400, `CardController has error: ${error}`));
+            next(error);
         }
     }
 
@@ -71,7 +72,7 @@ class CardController {
             const cards = await cardService.getListCards(listId);
             res.status(200).json(cards);
         } catch (error) {
-            next(new customError(400, `CardController has error: ${error}`));
+            next(error);
         }
     }
 
@@ -82,7 +83,7 @@ class CardController {
             const result = await cardService.addCardToList(cardId, listId);
             res.status(200).json(result);
         } catch (error) {
-            next(new customError(400, `CardController has error: ${error}`));
+            next(error);
         }
     }
 
@@ -93,10 +94,105 @@ class CardController {
             const result = await cardService.removeCardFromList(cardId, listId);
             res.status(200).json(result);
         } catch (error) {
-            next(new customError(400, `CardController has error: ${error}`));
+            next(error);
         }
     }
 
+    public async assignUser (req: Request, res: Response, next: NextFunction) {
+        try {
+            const userId = parseInt(req.body.userId);
+            const cardId = parseInt(req.body.cardId);
+            const result = await cardService.assignUserToCard(cardId, userId);
+            res.status(200).json(result);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public async removeUser (req: Request, res: Response, next: NextFunction) {
+        try {
+            const userId = parseInt(req.body.userId);
+            const cardId = parseInt(req.body.cardId);
+            const result = await cardService.removeUserFromCard(cardId, userId);
+            res.status(200).json(result);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public async addComment (req: Request, res: Response, next: NextFunction) {
+        try {
+            const commentId = parseInt(req.body.commentId);
+            const cardId = parseInt(req.body.cardId);
+            const result = await cardService.addCommentToCard(cardId, commentId);
+            res.status(200).json(result);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public async removeComment (req: Request, res: Response, next: NextFunction) {
+        try {
+            const commentId = parseInt(req.body.commentId);
+            const cardId = parseInt(req.body.cardId);
+            const result = await cardService.removeCommentFromCard(cardId, commentId);
+            res.status(200).json(result);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public async addAttachment (req: Request, res: Response, next: NextFunction) {
+        try {
+            const attachmentId = parseInt(req.body.attachmentId);
+            const cardId = parseInt(req.body.cardId);
+            const result = await cardService.addAttachmentToCard(cardId, attachmentId);
+            res.status(200).json(result);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public async removeAttachment (req: Request, res: Response, next: NextFunction) {
+        try {
+            const attachmentId = parseInt(req.body.attachmentId);
+            const cardId = parseInt(req.body.cardId);
+            const result = await cardService.removeAttachmentFromCard(cardId, attachmentId);
+            res.status(200).json(result);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public async getCardUsers (req: Request, res: Response, next: NextFunction) {
+        try {
+            const cardId = parseInt(req.params.cardId);
+            const users = await cardService.getCardUsers(cardId);
+            res.status(200).json(users);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public async getCardComments (req: Request, res: Response, next: NextFunction) {
+        try {
+            const cardId = parseInt(req.params.cardId);
+            const comments = await cardService.getCardComments(cardId);
+            res.status(200).json(comments);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public async getCardAttachments (req: Request, res: Response, next: NextFunction) {
+        try {
+            const cardId = parseInt(req.params.cardId);
+            const attachments = await cardService.getCardAttachments(cardId);
+            res.status(200).json(attachments);
+        } catch (error) {
+            next(error);
+        }
+    }
 }
 
 export default new CardController();

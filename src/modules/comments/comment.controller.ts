@@ -11,17 +11,18 @@ class CommentController {
             const result = await commentService.findCommentById(id);
             res.status(result.status).json(result);
         } catch (error) {
-            next(new customError(400, `CommentController has error: ${error}`));
+            next(error);
         }
     }
 
     public async createComment(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const comment = req.body as Comment;
-            const result = await commentService.createComment(comment);
+            const cardId = Number(req.body.cardId);
+            const result = await commentService.createComment(comment, cardId);
             res.status(result.status).json(result);
         } catch (error) {
-            next(new customError(400, `CommentController has error: ${error}`));
+            next(error);
         }
     }
 
@@ -31,7 +32,7 @@ class CommentController {
             const result = await commentService.deleteComment(id);
             res.status(result.status).json(result);
         } catch (error) {
-            next(new customError(400, `CommentController has error: ${error}`));
+            next(error);
         }
     }
 
@@ -42,7 +43,7 @@ class CommentController {
             const result = await commentService.updateComment(id, comment);
             res.status(result.status).json(result);
         } catch (error) {
-            next(new customError(400, `CommentController has error: ${error}`));
+            next(error);
         }
     }
 }

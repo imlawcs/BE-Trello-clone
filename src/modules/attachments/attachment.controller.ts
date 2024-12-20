@@ -48,6 +48,20 @@ class AttachmentController {
             next(error);
         }
     }
+
+    public async uploadFile(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const cardId = Number(req.body.cardId);
+            if (!req.file) {
+                throw new customError(400, "No file uploaded");
+            }
+            const result = await attachmentService.uploadFile(req.file, cardId);
+
+            res.status(result.status).json(result);
+        } catch (error) {
+            next(error); 
+        }
+    }
 }
 
 export default new AttachmentController();

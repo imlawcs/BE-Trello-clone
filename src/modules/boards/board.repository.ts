@@ -2,6 +2,7 @@ import { dbSource } from "../../config/ormconfig";
 import { Board } from "../../database/entities/board";
 import customError from "../../common/error/customError";
 import { List } from "../../database/entities/list";
+import { User } from "../../database/entities/user";
 
 class BoardRepository {
     private readonly boardRepository = dbSource.getRepository(Board);
@@ -19,6 +20,8 @@ class BoardRepository {
                 description: board.description,
                 lists: board.lists,
                 workspace: board.workspace,
+                activityLogs: board.activityLogs,
+                users: board.users
             }));
         } catch (error) {
             throw new customError(400, `BoardRepository has error: ${error}`);
@@ -59,8 +62,8 @@ class BoardRepository {
 
     public async createBoard(board : Board): Promise<Board> {
         try {
-            await this.boardRepository.save(board);
-            return board;
+            const newBoard : Board = await this.boardRepository.save(board);
+            return newBoard;
         } catch (error) {
             throw new customError(400, `BoardRepository has error: ${error}`);
         }
@@ -119,6 +122,28 @@ class BoardRepository {
         }
     }
 
+    public async getBoardUsers(id: number): Promise<User[]> {
+        try {
+            const board = await this.boardRepository.findOne({
+                select: ["id", "title", "description"],
+                where: {
+                    id,
+                },
+                relations: ["users"]
+            })
+            if (!board) {
+                throw new customError(400, `BoardRepository has error: Board does not exist`);
+            }
+            if (!board.users) {
+                throw new customError(400, `BoardRepository has error: Board does not have any user`);
+            }
+            return board.users;
+        }
+        catch (error) {
+            throw new customError(400, `BoardRepository has error: ${error}`)
+        }
+    }
+
     public async isListInBoard(listId: number, boardId: number): Promise<boolean> {
         try {
             const board = await this.boardRepository.findOne({
@@ -163,6 +188,12 @@ class BoardRepository {
             if (!list) {
                 throw new customError(400, `BoardRepository has error: List does not exist`);
             }
+
+            const isListInBoard = await this.isListInBoard(listId, boardId);
+            if (isListInBoard) {
+                throw new customError(400, 'List is already in board');
+            }
+
             board.lists.push(list);
             await this.boardRepository.save(board);
         } catch (error) {
@@ -189,7 +220,100 @@ class BoardRepository {
             if (!list) {
                 throw new customError(400, `BoardRepository has error: List does not exist`);
             }
+
+            const isListInBoard = await this.isListInBoard(listId, boardId);
+            if(!isListInBoard) {
+                throw new customError(400, 'List is not in board')
+            }
+
             board.lists = board.lists.filter(item => item.id !== listId);
+            await this.boardRepository.save(board);
+        } catch (error) {
+            throw new customError(400, `BoardRepository has error: ${error}`);
+        }
+    }
+
+    public async isUserInBoard(userId: number, boardId: number): Promise<boolean> {
+        try {
+            const board = await this.boardRepository.findOne({
+                where: {
+                    id: boardId,
+                },
+                relations: ["users"],
+            });
+            if (!board) {
+                throw new customError(400, `BoardRepository has error: Board does not exist`);
+            }
+            const user = await dbSource.getRepository(User).findOne({
+                where: {
+                    id: userId,
+                },
+            });
+            if (!user) {
+                throw new customError(400, `BoardRepository has error: User does not exist`);
+            }
+            return board.users.some(item => item.id === userId);
+        } catch (error) {
+            throw new customError(400, `BoardRepository has error: ${error}`);
+        }
+    }
+
+    public async addUserToBoard(userId: number, boardId: number): Promise<void> {
+        try {
+            const board = await this.boardRepository.findOne({
+                where: {
+                    id: boardId,
+                },
+                relations: ["users"],
+            });
+            if (!board) {
+                throw new customError(400, `BoardRepository has error: Board does not exist`);
+            }
+            const user = await dbSource.getRepository(User).findOne({
+                where: {
+                    id: userId,
+                },
+            });
+            if (!user) {
+                throw new customError(400, `BoardRepository has error: User does not exist`);
+            }
+
+            const isUserInBoard = await this.isUserInBoard(userId, boardId);
+            if(isUserInBoard) {
+                throw new customError(400, 'User is already in board');
+            }
+            board.users.push(user);
+            await this.boardRepository.save(board);
+        } catch (error) {
+            throw new customError(400, `BoardRepository has error: ${error}`);
+        }
+    }
+
+    public async removeUserFromBoard(userId: number, boardId: number): Promise<void> {
+        try {
+            const board = await this.boardRepository.findOne({
+                where: {
+                    id: boardId,
+                },
+                relations: ["users"],
+            });
+            if (!board) {
+                throw new customError(400, `BoardRepository has error: Board does not exist`);
+            }
+            const user = await dbSource.getRepository(User).findOne({
+                where: {
+                    id: userId,
+                },
+            });
+            if (!user) {
+                throw new customError(400, `BoardRepository has error: User does not exist`);
+            }
+
+            const isUserInBoard = await this.isUserInBoard(userId, boardId);
+            if(!isUserInBoard) {
+                throw new customError(400, 'User is not in board')
+            }
+            board.users = board.users.filter(item => item.id !== userId);
             await this.boardRepository.save(board);
         } catch (error) {
             throw new customError(400, `BoardRepository has error: ${error}`);

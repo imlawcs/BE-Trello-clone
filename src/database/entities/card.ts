@@ -3,6 +3,8 @@ import { User } from "./user";
 import { Attachment } from "./attachment";
 import { Comment } from "./comment";
 import { List } from "./list";
+import { ActivityLog } from "./activitylog";
+import { Checklist } from "./checklist";
 
 @Entity()
 export class Card {
@@ -20,11 +22,17 @@ export class Card {
 
   @ManyToMany(() => User, (user) => user.cards)
   @JoinTable({ name: 'user_card' })
-  users!: User;
+  users!: User[];
 
   @OneToMany(() => Comment, (comments) => comments.card)
   comments!: Comment[];
 
   @ManyToOne(() => List, (list) => list.cards)
   list!: List;
+
+  @OneToMany(() => ActivityLog, (activityLogs) => activityLogs.card)
+  activityLogs!: ActivityLog[];
+
+  @OneToMany(() => Checklist, (checklists) => checklists.card)
+  checklists!: Checklist[];
 }

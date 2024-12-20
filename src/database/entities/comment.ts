@@ -11,10 +11,10 @@ export class Comment {
   comment!: string;
 
   @CreateDateColumn()
-  created_at!: Date;
+  created_at?: Date;
 
   @UpdateDateColumn()
-  updated_at!: Date;
+  updated_at?: Date;
 
   @ManyToOne(() => Card, (card) => card.comments)
   card!: Card;

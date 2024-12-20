@@ -3,15 +3,21 @@ import { User } from "./user";
 
 @Entity()
 export class Notification {
-    @PrimaryGeneratedColumn()
-    id!: number;
+    @PrimaryGeneratedColumn("increment")
+    id?: number;
     
     @Column()
     title!: string;
     
     @Column()
-    cription?: string;
+    description?: string;
+
+    @Column()
+    createdAt!: Date;
+
+    @Column()
+    isRead!: boolean;
     
     @ManyToOne(() => User, (user) => user.notifications)
     user!: User;
-    }
+}

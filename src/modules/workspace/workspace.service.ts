@@ -1,5 +1,6 @@
 import workspaceRepository from "./workspace.repository";
 import userRepository from "../users/user.repository";
+import boardRepository from "../boards/board.repository";
 import { Workspace } from "../../database/entities/workspace";
 import { User } from "../../database/entities/user";
 import customError from "../../common/error/customError";
@@ -182,6 +183,80 @@ class WorkspaceService {
                 throw new customError(404, 'No boards found');
             }
             return boards;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    public async findUserOfWorkspace(workspaceId: number, userId: number): Promise<boolean> {
+        try {
+            if (!workspaceId) {
+                throw new customError(400, 'No workspace id provided');
+            }
+            if (!userId) {
+                throw new customError(400, 'No user id provided');
+            }
+            const user = await this.workspaceRepository.findUserOfWorkspace(workspaceId, userId);
+            if (!user) {
+                return false;
+            }
+            return true;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    public async addBoardToWorkspace(workspaceId: number, boardId: number): Promise<Result> {
+        try {
+            if (!workspaceId) {
+                throw new customError(400, 'No workspace id provided');
+            }
+            if (!boardId) {
+                throw new customError(400, 'No board id provided');
+            }
+            const workspace = await this.workspaceRepository.findByWorkspaceId(workspaceId);
+            if (!workspace) {
+                throw new customError(404, 'Workspace not found');
+            }
+            const board = await boardRepository.findByBoardId(boardId);
+            if (!board) {
+                throw new customError(404, 'Board not found');
+            }
+
+            const boardExist = await this.workspaceRepository.findBoardOfWorkspace(workspaceId, boardId);
+            if (boardExist) {
+                throw new customError(409, 'Board already in workspace');
+            }
+            await this.workspaceRepository.addBoardToWorkspace(workspace, board);
+            return new Result(true, 200, 'Add board to workspace successful');
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    public async removeBoardFromWorkspace(workspaceId: number, boardId: number): Promise<Result> {
+        try {
+            if (!workspaceId) {
+                throw new customError(400, 'No workspace id provided');
+            }
+            if (!boardId) {
+                throw new customError(400, 'No board id provided');
+            }
+            const workspace = await this.workspaceRepository.findByWorkspaceId(workspaceId);
+            if (!workspace) {
+                throw new customError(404, 'Workspace not found');
+            }
+            const board = await boardRepository.findByBoardId(boardId);
+            if (!board) {
+                throw new customError(404, 'Board not found');
+            }
+
+            const boardExist = await this.workspaceRepository.findBoardOfWorkspace(workspaceId, boardId);
+            if (!board) {
+                throw new customError(409, 'Board not in workspace');
+            }
+            await this.workspaceRepository.removeBoardFromWorkspace(workspace, board);
+            return new Result(true, 200, 'Remove board from workspace successful');
         } catch (error) {
             throw error;
         }

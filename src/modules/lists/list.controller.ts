@@ -35,7 +35,8 @@ class ListController {
     public async createList(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const list = req.body as List;
-            const newList = await listService.createList(list);
+            const boardId = parseInt(req.body.boardId);
+            const newList = await listService.createList(list, boardId);
             res.status(201).json(newList);
         } catch (error) {
             next(error);
@@ -75,7 +76,7 @@ class ListController {
 
     public async addCardToList(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const id = parseInt(req.body.id);
+            const id = parseInt(req.body.listId);
             const cardId = parseInt(req.body.cardId);
             const result = await listService.addCardToList(id, cardId);
             res.status(201).json(result);
@@ -86,7 +87,7 @@ class ListController {
 
     public async removeCardFromList(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const id = parseInt(req.body.id);
+            const id = parseInt(req.body.ListId);
             const cardId = parseInt(req.body.cardId);
             const result = await listService.removeCardFromList(id, cardId);
             res.status(200).json(result);

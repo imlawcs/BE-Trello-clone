@@ -1,6 +1,8 @@
 import boardRepository from "./board.repository";
 import listRepository from "../lists/list.repository";
+import workspaceService from "../workspace/workspace.service";
 import { Board } from "../../database/entities/board";
+import userRepository from "../users/user.repository";
 import customError from "../../common/error/customError";
 import { Result } from "../../common/response/Result";
 import e from "express";
@@ -50,12 +52,16 @@ class BoardService {
         }
     }
 
-    public async createBoard(board: Board): Promise<Result> {
+    public async createBoard(board: Board, workspaceId: number): Promise<Result> {
         try {
+            if (!workspaceId) {
+                throw new customError(400, "Workspace id is required");
+            }
             if (!board) {
                 throw new customError(400, "Board is required");
             }
-            await boardRepository.createBoard(board);
+            const newBoard = await boardRepository.createBoard(board);
+            await workspaceService.addBoardToWorkspace(workspaceId, newBoard.id);
             return new Result(true, 201, "Create board successful", board);
         } catch (error) {
             throw error;
@@ -138,6 +144,86 @@ class BoardService {
             }
             await boardRepository.removeListFromBoard(id, listId);
             return new Result(true, 200, "Remove list from board successful");
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    public async getBoardUsers (id: number): Promise<Result> {
+        try {
+            if(!id) {
+                throw new customError(400, 'Id is required')
+            }
+            const users = await boardRepository.getBoardUsers(id);
+            if(users.length === 0) {
+                throw new customError(404, "Users not found")
+            }
+            return new Result(true, 200, "Get board users successful", users);
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    public async addUserToBoard(userId: number, boardId: number): Promise<Result> {
+        try {
+            if (!userId) {
+                throw new customError(400, "User id is required");
+            }
+            if (!boardId) {
+                throw new customError(400, "Board id is required");
+            }
+            const boardExist = await boardRepository.findByBoardId(boardId);
+            if (!boardExist) {
+                throw new customError(404, "Board not found");
+            }
+            const userExist = await userRepository.findByUserId(userId);
+            if (!userExist) {
+                throw new customError(404, "User not found");
+            }
+            await boardRepository.addUserToBoard(userId, boardId);
+            return new Result(true, 200, "Add user to board successful");
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    public async findUserInBoard(userId: number, boardId: number): Promise<boolean> {
+        try {
+            if (!userId) {
+                throw new customError(400, "User id is required");
+            }
+            if (!boardId) {
+                throw new customError(400, "Board id is required");
+            }
+            const userInBoard = await boardRepository.isUserInBoard(userId, boardId);
+            if (!userInBoard) {
+                return false;
+            }
+            return true;
+        } catch (error) {
+            throw error;
+        }
+
+    }
+
+    public async removeUserFromBoard(userId: number, boardId: number): Promise<Result> {
+        try {
+            if (!userId) {
+                throw new customError(400, "User id is required");
+            }
+            if (!boardId) {
+                throw new customError(400, "Board id is required");
+            }
+            const boardExist = await boardRepository.findByBoardId(boardId);
+            if (!boardExist) {
+                throw new customError(404, "Board not found");
+            }
+            const userExist = await userRepository.findByUserId(userId);
+            if (!userExist) {
+                throw new customError(404, "User not found");
+            }
+            await boardRepository.removeUserFromBoard(userId, boardId);
+            return new Result(true, 200, "Remove user from board successful");
         } catch (error) {
             throw error;
         }

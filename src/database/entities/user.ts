@@ -4,6 +4,8 @@ import { Card } from "./card";
 import { Comment } from "./comment";
 import { Notification } from "./notification";
 import { Workspace } from "./workspace";
+import { ActivityLog } from "./activitylog";
+import { Board } from "./board";
 
 @Entity()
 export class User {
@@ -33,8 +35,33 @@ export class User {
     notifications!: Notification[]
 
     @ManyToMany(() => Workspace, workspaces => workspaces.users)
-    @JoinTable({ name: 'user_workspace' })
+    @JoinTable({
+        name: "user_workspace", // Đặt tên bảng trung gian là 'user_workspace'
+        joinColumn: {
+            name: "userId", // Cột liên kết với bảng 'user'
+            referencedColumnName: "id", // Cột 'id' trong bảng 'user'
+        },
+        inverseJoinColumn: {
+            name: "workspaceId", // Cột liên kết với bảng 'workspace'
+            referencedColumnName: "id", // Cột 'id' trong bảng 'workspace'
+        },
+    })
     workspaces!: Workspace[]
-    // @ManyToOne(() => Board, board => board.users)
-    // boards!: Board[]
+
+    @ManyToMany(() => Board, board => board.users)
+    @JoinTable({
+        name: "user_board", // Đặt tên bảng trung gian là 'user_board'
+        joinColumn: {
+            name: "userId", // Cột liên kết với bảng 'user'
+            referencedColumnName: "id", // Cột 'id' trong bảng 'user'
+        },
+        inverseJoinColumn: {
+            name: "boardId", // Cột liên kết với bảng 'board'
+            referencedColumnName: "id", // Cột 'id' trong bảng 'board'
+        },
+    })
+    boards!: Board[];
+    
+    @OneToMany(() => ActivityLog, activityLogs => activityLogs.user)
+    activityLogs!: ActivityLog[]
 }

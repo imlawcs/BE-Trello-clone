@@ -37,7 +37,8 @@ class BoardController {
     public async createBoard(req: Request, res: Response, next: NextFunction) {
         try {
             const board: Board = req.body;
-            const result = await boardService.createBoard(board);
+            const workspaceId = parseInt(req.body.workspaceId);
+            const result = await boardService.createBoard(board, workspaceId);
             res.status(result.status).json(result);
         } catch (error) {
             next(error);
@@ -91,6 +92,38 @@ class BoardController {
         try {
             const id = parseInt(req.params.id);
             const result = await boardService.getBoardLists(id);
+            res.status(result.status).json(result);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public async getBoardUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const id = parseInt(req.params.id);
+            const result = await boardService.getBoardUsers(id);
+            res.status(result.status).json(result);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public async addUserToBoard(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const boardId = parseInt(req.body.boardId);
+            const userId = parseInt(req.body.userId);
+            const result = await boardService.addUserToBoard(boardId, userId);
+            res.status(result.status).json(result);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    public async removeUserFromBoard(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const boardId = parseInt(req.body.boardId);
+            const userId = parseInt(req.body.userId);
+            const result = await boardService.removeUserFromBoard(boardId, userId);
             res.status(result.status).json(result);
         } catch (error) {
             next(error);
