@@ -1,11 +1,11 @@
 import boardRepository from "./board.repository";
 import listRepository from "../lists/list.repository";
+import roleRepository from "../roles/role.repository";
 import workspaceService from "../workspace/workspace.service";
 import { Board } from "../../database/entities/board";
 import userRepository from "../users/user.repository";
 import customError from "../../common/error/customError";
 import { Result } from "../../common/response/Result";
-import e from "express";
 
 class BoardService {
     public async findAllBoard(): Promise<Result> {
@@ -52,7 +52,7 @@ class BoardService {
         }
     }
 
-    public async createBoard(board: Board, workspaceId: number): Promise<Result> {
+    public async createBoard(board: Board, workspaceId: number, userId: number): Promise<Result> {
         try {
             if (!workspaceId) {
                 throw new customError(400, "Workspace id is required");
@@ -60,8 +60,15 @@ class BoardService {
             if (!board) {
                 throw new customError(400, "Board is required");
             }
-            const newBoard = await boardRepository.createBoard(board);
+            
+            const userInWorkspace = await workspaceService.findUserOfWorkspace(workspaceId, userId);
+            if (!userInWorkspace) {
+                throw new customError(403, "User is not in this workspace");
+            }
+
+            const newBoard = await boardRepository.createBoard(board, userId);
             await workspaceService.addBoardToWorkspace(workspaceId, newBoard.id);
+
             return new Result(true, 201, "Create board successful", board);
         } catch (error) {
             throw error;
@@ -224,6 +231,38 @@ class BoardService {
             }
             await boardRepository.removeUserFromBoard(userId, boardId);
             return new Result(true, 200, "Remove user from board successful");
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    public async assignRoleInBoard(userId: number, boardId: number, roleId: number): Promise<Result> {
+        try {
+            if (!userId) {
+                throw new customError(400, "User id is required");
+            }
+            if (!boardId) {
+                throw new customError(400, "Board id is required");
+            }
+            if (!roleId) {
+                throw new customError(400, "Role id is required");
+            }
+            const boardExist = await boardRepository.findByBoardId(boardId);
+            if (!boardExist) {
+                throw new customError(404, "Board not found");
+            }
+            const userExist = await userRepository.findByUserId(userId);
+            if (!userExist) {
+                throw new customError(404, "User not found");
+            }
+
+            const roleExist = await roleRepository.findRoleById(roleId);
+            if (!roleExist) {
+                throw new customError(404, "Role not found");
+            }
+
+            await boardRepository.assignRoleInBoard(userExist, boardExist, roleExist);
+            return new Result(true, 200, "Assign role in board successful");
         } catch (error) {
             throw error;
         }

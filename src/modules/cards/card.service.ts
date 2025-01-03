@@ -10,6 +10,8 @@ import userRepository from "../users/user.repository";
 import{ Attachment } from "../../database/entities/attachment";
 import{ Comment } from "../../database/entities/comment";
 import{ User } from "../../database/entities/user";
+import boardService from "../boards/board.service";
+import boardRepository from "../boards/board.repository";
 
 
 class CardService {
@@ -55,20 +57,31 @@ class CardService {
         }
     }
 
-    public async createCard(card: Card, listId: number): Promise<Result> {
+    public async createCard(card: Card, listId: number, boardId: number, userId: number): Promise<Result> {
         try {
             if (!listId) {
                 throw new customError(400, "ListId is required");
             }
-            const newCard = await cardRepository.createCard(card);
-            await listService.addCardToList(newCard.id, listId);
+            if (!boardId) {
+                throw new customError(400, "BoardId is required");
+            }
+            const boardExist = await boardRepository.findByBoardId(boardId);
+            if (!boardExist) {
+                throw new customError(404, `Board ${boardId} is not found`);
+            }
+            const User = await userRepository.findByUserId(userId);
+            if (!User) {
+                throw new customError(404, `User ${userId} is not found`);
+            }
+            const newCard = await cardRepository.createCard(card, boardExist, User);
+            await listService.addCardToList(listId, newCard.id);
             return new Result(true, 201, `Card ${newCard.id} has been created`, newCard);
         } catch (error) {
             throw error;
         }
     }
 
-    public async updateCard(id: number, card: Card): Promise<Result> {
+    public async updateCard(id: number, card: Card, userId: number, boardId: number): Promise<Result> {
         try {
             if (!id) {
                 throw new customError(400, "Id is required");
@@ -77,14 +90,25 @@ class CardService {
             if (!cardExist) {
                 throw new customError(404, `Card ${id} is not found`);
             }
-            await cardRepository.updateCard(id, card);
+            if (!boardId) {
+                throw new customError(400, "BoardId is required");
+            }
+            const boardExist = await boardRepository.findByBoardId(boardId);
+            if (!boardExist) {
+                throw new customError(404, `Board ${boardId} is not found`);
+            }
+            const user = await userRepository.findByUserId(userId);
+            if (!user) {
+                throw new customError(404, `User ${userId} is not found`);
+            }
+            await cardRepository.updateCard(id, card, user, boardExist);
             return new Result(true, 200, `Card ${id} has been updated`);
         } catch (error) {
             throw error;
         }
     }
 
-    public async deleteCard(id: number): Promise<Result> {
+    public async deleteCard(id: number, userId: number, boardId: number): Promise<Result> {
         try {
             if (!id) {
                 throw new customError(400, "Id is required");
@@ -93,7 +117,18 @@ class CardService {
             if (!cardExist) {
                 throw new customError(404, `Card ${id} is not found`);
             }
-            await cardRepository.deleteCard(id);
+            if (!boardId) {
+                throw new customError(400, "BoardId is required");
+            }
+            const boardExist = await boardRepository.findByBoardId(boardId);
+            if (!boardExist) {
+                throw new customError(404, `Board ${boardId} is not found`);
+            }
+            const user = await userRepository.findByUserId(userId);
+            if (!user) {
+                throw new customError(404, `User ${userId} is not found`);
+            }
+            await cardRepository.deleteCard(id, user, boardExist);
             return new Result(true, 200, `Card ${id} has been deleted`);
         } catch (error) {
             throw error;
@@ -141,7 +176,7 @@ class CardService {
         }
     }
 
-    public async addCommentToCard(cardId: number, commentId: number): Promise<Result> {
+    public async addCommentToCard(cardId: number, commentId: number, userId: number, boardId: number): Promise<Result> {
         try {
             const cardExist = await cardRepository.findCardById(cardId);
             if (!cardExist) {
@@ -158,7 +193,16 @@ class CardService {
                 throw new customError(400, `Comment ${commentId} is already in Card ${cardId}`);
             }
 
-            await cardRepository.addComment(cardExist, commentExist);
+            const boardExist = await boardRepository.findByBoardId(boardId);
+            if (!boardExist) {
+                throw new customError(404, `Board ${boardId} is not found`);
+            }
+            const user = await userRepository.findByUserId(userId);
+            if (!user) {
+                throw new customError(404, `User ${userId} is not found`);
+            }
+
+            await cardRepository.addComment(cardExist, commentExist, user, boardExist);
             return new Result(true, 200, `Comment ${commentId} has been added to Card ${cardId}`);
         } catch (error) {
             throw error;
@@ -201,10 +245,10 @@ class CardService {
                 throw new customError(400, `Attachment ${attachmentId} is not exist`);
             }
 
-            const isAttachmentInCard = await cardRepository.findAttachmentInCard(attachmentId, cardId);
-            if (isAttachmentInCard) {
-                throw new customError(400, `Attachment ${attachmentId} is already in Card ${cardId}`);
-            }
+            // const isAttachmentInCard = await cardRepository.findAttachmentInCard(attachmentId, cardId);
+            // if (isAttachmentInCard) {
+            //     throw new customError(400, `Attachment ${attachmentId} is already in Card ${cardId}`);
+            // }
 
             await cardRepository.addAttachment(cardExist, attachmentExist);
             return new Result(true, 200, `Attachment ${attachmentId} has been added to Card ${cardId}`);
@@ -355,10 +399,10 @@ class CardService {
                 throw new customError(400, `Checklist ${checklistId} is not exist`);
             }
 
-            const isChecklistInCard = await cardRepository.findChecklistInCard(checklistId, cardId);
-            if (isChecklistInCard) {
-                throw new customError(400, `Checklist ${checklistId} is already in Card ${cardId}`);
-            }
+            // const isChecklistInCard = await cardRepository.findChecklistInCard(checklistId, cardId);
+            // if (isChecklistInCard) {
+            //     throw new customError(400, `Checklist ${checklistId} is already in Card ${cardId}`);
+            // }
 
             await cardRepository.addChecklistToCard(cardExist, checklistExist);
             return new Result(true, 200, `Checklist ${checklistId} has been added to Card ${cardId}`);

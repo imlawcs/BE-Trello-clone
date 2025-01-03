@@ -19,7 +19,9 @@ class CommentController {
         try {
             const comment = req.body as Comment;
             const cardId = Number(req.body.cardId);
-            const result = await commentService.createComment(comment, cardId);
+            const userId = Number(req.user.id);
+            const boardId = Number(req.body.boardId);
+            const result = await commentService.createComment(comment, cardId, userId, boardId);
             res.status(result.status).json(result);
         } catch (error) {
             next(error);

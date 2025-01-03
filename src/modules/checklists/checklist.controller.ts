@@ -6,6 +6,7 @@ class ChecklistController {
     public async createChecklist(req: Request, res: Response, next: NextFunction) {
         try {
             const checklist: Checklist = req.body;
+            
             const cardId = parseInt(req.body.cardId);
             const result = await checklistService.createChecklist(checklist, cardId);
             res.status(201).json(result);

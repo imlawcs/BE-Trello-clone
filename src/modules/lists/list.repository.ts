@@ -119,26 +119,9 @@ class ListRepository {
         }
     }
 
-    public async isCardInList(listId: number, cardId: number): Promise<boolean> {
+    public async isCardInList(list: List, card: Card): Promise<boolean> {
         try {
-            const listExist = await this.listRepository.findOne({
-                where: {
-                    id: listId,
-                },
-                relations: ["cards"],
-            });
-            if (!listExist) {
-                throw new customError(404, "List not found");
-            }
-            const cardExist = await dbSource.getRepository(Card).findOne({
-                where: {
-                    id: cardId,
-                },
-            });
-            if (!cardExist) {
-                throw new customError(404, "Card not found");
-            }
-            return listExist.cards.some(c => c.id === cardId);
+            return list.cards.some(c => c.id === card.id);
         } catch (error) {
             throw new customError(400, `ListRepository has error: ${error}`);
         }

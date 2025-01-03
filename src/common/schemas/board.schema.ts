@@ -36,6 +36,12 @@ class BoardSchema {
         userId: Joi.number().required(),
         boardId: Joi.number().required(),
     });
+
+    public assignRoleInBoardSchema = Joi.object({
+        userId: Joi.number().required(),
+        boardId: Joi.number().required(),
+        roleId: Joi.number().required(),
+    });
 }
 
 export default new BoardSchema();

@@ -3,10 +3,13 @@ import { Workspace } from "../../database/entities/workspace";
 import { User } from "../../database/entities/user";
 import { Board } from "../../database/entities/board";
 import customError from "../../common/error/customError";
+import { UserWorkspace } from "../../database/entities/user_workspace";
+import { Role } from "../../database/entities/role";
 import { any } from "joi";
 
 class WorkspaceRepository {
     private readonly workspaceRepository = dbSource.getRepository(Workspace); 
+    private readonly userWorkspaceRepository = dbSource.getRepository(UserWorkspace);
 
     public async findAllWorkspace(): Promise<any[]> {
         try {
@@ -60,9 +63,32 @@ class WorkspaceRepository {
         }
     }
 
-    public async createWorkspace(workspace: Workspace): Promise<Workspace> {
+    public async createWorkspace(workspace: Workspace, userId: number): Promise<Workspace> {
         try {
+            const user = await dbSource.getRepository(User).findOne({
+                where: { id: userId },
+            });
+            if (!user) {
+                throw new customError(404, 'User not found');
+            }
+
+            const role = await dbSource.getRepository(Role).findOne({
+                where: {
+                    name: 'owner of workspace',
+                }
+            });
+            if (!role) {
+                throw new customError(404, 'Role not found');
+            }
+
             const newWorkspace = await this.workspaceRepository.save(workspace);
+
+            const UserWorkspace = {
+                user: user,
+                workspace: newWorkspace,
+                role: role,
+            }
+            await this.userWorkspaceRepository.save(UserWorkspace);
             return newWorkspace;
         } catch (error) {
             throw new customError(400, `WorkspaceRepository has error: ${error}`);
@@ -87,13 +113,7 @@ class WorkspaceRepository {
 
     public async findUserOfWorkspace(workspaceId: number, userId: number): Promise<boolean> {
         try {
-            const workspace = await this.workspaceRepository.findOne({
-                where: {
-                    id: workspaceId,
-                },
-                relations: ["users"],
-            });
-
+            const workspace = await this.findByWorkspaceId(workspaceId);
             if (!workspace) {
                 throw new customError(404, 'Workspace not found');
             }
@@ -121,6 +141,21 @@ class WorkspaceRepository {
                 throw new customError(400, 'User already in workspace');
             }
             else {
+                const role = await dbSource.getRepository(Role).findOne({
+                    where: {
+                        name: 'member of workspace',
+                    }
+                });
+                if (!role) {
+                    throw new customError(404, 'Role not found');
+                }
+                const UserWorkspace = {
+                    user: user,
+                    workspace: workspace,
+                    role: role,
+                }
+                await this.userWorkspaceRepository.save(UserWorkspace);
+
                 workspace.users.push(user);
                 await this.workspaceRepository.save(workspace);
             }
@@ -140,8 +175,40 @@ class WorkspaceRepository {
                 workspace.users = existingWorkspace?.users || [];
             }
 
+            const userWorkspace = await this.userWorkspaceRepository.findOne({
+                where: {
+                    user: user,
+                    workspace: workspace,
+                }
+            });
+
+            if (!userWorkspace) {
+                throw new customError(404, 'User not found in workspace');
+            }
+            await this.userWorkspaceRepository.delete(userWorkspace.id);
+
             workspace.users = workspace.users.filter(u => u.id !== user.id);
             await this.workspaceRepository.save(workspace);
+        } catch (error) {
+            throw new customError(400, `WorkspaceRepository has error: ${error}`);
+        }
+    }
+
+    public async assignRoleInWorkspace(workspace : Workspace, user : User, role : Role): Promise<void> {
+        try {
+            const userWorkspace = await this.userWorkspaceRepository.findOne({
+                where: {
+                    user: user,
+                    workspace: workspace,
+                }
+            });
+
+            if (!userWorkspace) {
+                throw new customError(404, 'User not found in workspace');
+            }
+
+            userWorkspace.role = role;
+            await this.userWorkspaceRepository.save(userWorkspace);
         } catch (error) {
             throw new customError(400, `WorkspaceRepository has error: ${error}`);
         }
@@ -188,6 +255,7 @@ class WorkspaceRepository {
 
     public async findBoardOfWorkspace(workspaceId: number, boardId: number): Promise<boolean> {
         try {
+            
             const workspace = await this.workspaceRepository.findOne({
                 where: {
                     id: workspaceId,

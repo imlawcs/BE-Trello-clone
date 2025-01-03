@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import errorHandler from './common/error/errorHandler';
 import customError from './common/error/customError';
 import appRouter from './router/index.router';
+import './config/cloudinary';
 
 dotenv.config();
 
@@ -23,7 +24,7 @@ app.get('/error', (req: Request, res: Response, next: NextFunction) => {
   next(new customError(500, 'Test error'));
 });
 
-app.use(errorHandler);
+// app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}/`);

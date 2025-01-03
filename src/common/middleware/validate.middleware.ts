@@ -421,6 +421,24 @@ class ValidateMiddleware {
             next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
         }
     }
+
+    async validateAssignRoleInBoard(req: Request, res: Response, next: NextFunction) {
+        try {
+            await boardSchema.assignRoleInBoardSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
+
+    async validateAssignRoleInWorkspace(req: Request, res: Response, next: NextFunction) {
+        try {
+            await WorkspaceSchema.assignRoleInWorkspaceSchema.validateAsync(req.body, { abortEarly: false });
+            next();
+        } catch (error : any) {
+            next(new CustomError(StatusCodes.BAD_REQUEST, error.message));
+        }
+    }
 }
 
 export default new ValidateMiddleware()

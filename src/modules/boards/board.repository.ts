@@ -3,9 +3,15 @@ import { Board } from "../../database/entities/board";
 import customError from "../../common/error/customError";
 import { List } from "../../database/entities/list";
 import { User } from "../../database/entities/user";
+import { UserBoard } from "../../database/entities/user_board";
+import { Role } from "../../database/entities/role";
+import { ActivityLog } from "../../database/entities/activitylog";
+import activityService from "../activitylogs/activity.service";
+import { Activity } from "../../common/types/activitylog.enum";
 
 class BoardRepository {
     private readonly boardRepository = dbSource.getRepository(Board);
+    private readonly userBoardRepository = dbSource.getRepository(UserBoard);
 
     public async findAllBoard(): Promise<Board[]> {
         try {
@@ -60,9 +66,46 @@ class BoardRepository {
         }
     }
 
-    public async createBoard(board : Board): Promise<Board> {
+    public async createBoard(board : Board, userId: number): Promise<Board> {
         try {
+            const role = await dbSource.getRepository(Role).findOne({
+                where: {
+                    name: 'owner of board'
+                }
+            })
+            
+            if (!role) {
+                throw new customError(404, "Role not found");
+            }
+
+            const user = await dbSource.getRepository(User).findOne({
+                where: {
+                    id: userId
+                }
+            });
+
+            if (!user) {
+                throw new customError(404, "User not found");
+            }
+
             const newBoard : Board = await this.boardRepository.save(board);
+
+            const userBoard = {
+                user: user,
+                board: newBoard,
+                role: role
+            }
+
+            await this.userBoardRepository.save(userBoard);
+
+            const activityLog = {
+                action: Activity.CREATE_BOARD,
+                description: `User ${user.username} created board ${newBoard.title}`,
+                user: user,
+                board: newBoard
+            }
+            await activityService.createActivity(activityLog);
+
             return newBoard;
         } catch (error) {
             throw new customError(400, `BoardRepository has error: ${error}`);
@@ -79,6 +122,14 @@ class BoardRepository {
             if (!boardExist)
                 throw new customError(400, `BoardRepository has error: Board does not exist`);            
             await this.boardRepository.update(boardId, board);
+
+            const activityLog = {
+                action: Activity.UPDATE_BOARD,
+                description: `Board ${boardExist.title} updated`,
+                user: boardExist.users[0],
+                board: boardExist
+            }
+            await activityService.createActivity(activityLog);
         } catch (error) {
             throw new customError(400, `BoardRepository has error: ${error}`);
         }
@@ -282,8 +333,34 @@ class BoardRepository {
             if(isUserInBoard) {
                 throw new customError(400, 'User is already in board');
             }
+
+            const role = await dbSource.getRepository(Role).findOne({
+                where: {
+                    name: 'member of board'
+                }
+            });
+            if (!role) {
+                throw new customError(400, `BoardRepository has error: Role does not exist`);
+            }
+
             board.users.push(user);
+
+            const userBoard = this.userBoardRepository.create({
+                board: board,
+                user: user,
+                role: role
+            });
+
+            await this.userBoardRepository.save(userBoard);
             await this.boardRepository.save(board);
+
+            const activityLog = {
+                action: Activity.ADD_USER_TO_BOARD,
+                description: `User ${user.username} added to board ${board.title}`,
+                user: user,
+                board: board
+            }
+            await activityService.createActivity(activityLog);
         } catch (error) {
             throw new customError(400, `BoardRepository has error: ${error}`);
         }
@@ -313,8 +390,56 @@ class BoardRepository {
             if(!isUserInBoard) {
                 throw new customError(400, 'User is not in board')
             }
+
+            const userBoard = await this.userBoardRepository.findOne({
+                where: {
+                    board: board,
+                    user: user
+                }
+            });
+            if (!userBoard) {
+                throw new customError(400, `BoardRepository has error: UserBoard does not exist`);
+            }
+
+            await this.userBoardRepository.remove(userBoard);
+
             board.users = board.users.filter(item => item.id !== userId);
             await this.boardRepository.save(board);
+
+            const activityLog = {
+                action: Activity.REMOVE_USER_FROM_BOARD,
+                description: `User ${user.username} removed from board ${board.title}`,
+                user: user,
+                board: board
+            }
+            await activityService.createActivity(activityLog);
+        } catch (error) {
+            throw new customError(400, `BoardRepository has error: ${error}`);
+        }
+    }
+
+    public async assignRoleInBoard(user: User, board: Board, role: Role): Promise<void> {
+        try {
+            const userBoard = await this.userBoardRepository.findOne({
+                where: {
+                    user: user,
+                    board: board
+                }
+            });
+            if (!userBoard) {
+                throw new customError(400, `BoardRepository has error: UserBoard does not exist`);
+            }
+
+            userBoard.role = role;
+            await this.userBoardRepository.save(userBoard);
+
+            const activityLog = {
+                action : Activity.ASSIGN_ROLE_IN_BOARD,
+                description: `Role ${role.name} assigned to user ${user.username} in board ${board.title}`,
+                user: user,
+                board: board
+            }
+            await activityService.createActivity(activityLog);
         } catch (error) {
             throw new customError(400, `BoardRepository has error: ${error}`);
         }

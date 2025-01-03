@@ -14,9 +14,9 @@ export class UserWorkspace {
 
     @ManyToOne(() => Workspace)
     @JoinColumn({ name: 'workspaceId' })
-    Workspace!: Workspace;
+    workspace!: Workspace;
 
     @ManyToOne(() => Role)
     @JoinColumn({ name: 'roleId' })
-    Role!: Role
+    role!: Role
 }

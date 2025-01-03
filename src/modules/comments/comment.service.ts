@@ -3,6 +3,7 @@ import cardService from "../cards/card.service";
 import { Comment } from "../../database/entities/comment";
 import customError from "../../common/error/customError";
 import { Result } from "../../common/response/Result";
+import { User } from "../../database/entities/user";
 
 class CommentService {
     public async findCommentById(id: number): Promise<Result> {
@@ -22,13 +23,13 @@ class CommentService {
 
     
 
-    public async createComment(comment: Comment, cardId: number): Promise<Result> {
+    public async createComment(comment: Comment, cardId: number, userId: number, boardId: number): Promise<Result> {
         try {
             if (!cardId) {
                 throw new customError(400, "Card id is required");
             }
             const newComment = await commentRepository.createComment(comment);
-            await cardService.addCommentToCard(cardId, newComment.id);
+            await cardService.addCommentToCard(cardId, newComment.id, userId, boardId);
             return new Result(true, 201, "Comment created", newComment);
         } catch (error) {
             throw error;

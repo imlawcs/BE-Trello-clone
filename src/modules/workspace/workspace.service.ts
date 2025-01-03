@@ -1,6 +1,7 @@
 import workspaceRepository from "./workspace.repository";
 import userRepository from "../users/user.repository";
 import boardRepository from "../boards/board.repository";
+import roleRepository from "../roles/role.repository";
 import { Workspace } from "../../database/entities/workspace";
 import { User } from "../../database/entities/user";
 import customError from "../../common/error/customError";
@@ -117,9 +118,47 @@ class WorkspaceService {
         }
     }
 
-    public async createWorkspace(workspace: Workspace): Promise<Result> {
+    public async assignRoleInWorkspace(workspaceId: number, userId: number, roleId: number): Promise<Result> {
         try {
-            const newWorkspace = await this.workspaceRepository.createWorkspace(workspace);
+            if (!workspaceId) {
+                throw new customError(400, 'No workspace id provided');
+            }
+            if (!userId) {
+                throw new customError(400, 'No user id provided');
+            }
+            if (!roleId) {
+                throw new customError(400, 'No role id provided');
+            }
+            const workspace = await this.workspaceRepository.findByWorkspaceId(workspaceId);
+            if (!workspace) {
+                throw new customError(404, 'Workspace not found');
+            }
+            const user = await userRepository.findByUserId(userId);
+            if (!user) {
+                throw new customError(404, 'User not found');
+            }
+
+            const role = await roleRepository.findRoleById(roleId);
+            if (!role) {
+                throw new customError(404, 'Role not found');
+            }
+
+            const isUserInWorkspace = await this.workspaceRepository.findUserOfWorkspace(workspaceId, userId);
+            if (!isUserInWorkspace) {
+                throw new customError(409, 'User not in workspace');
+            }
+
+            await this.workspaceRepository.assignRoleInWorkspace(workspace, user, role);
+            return new Result(true, 200, 'Assign role in workspace successful');
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+
+    public async createWorkspace(workspace: Workspace, userId: number): Promise<Result> {
+        try {
+            const newWorkspace = await this.workspaceRepository.createWorkspace(workspace, userId);
             if (!newWorkspace) {
                 throw new customError(400, 'Create workspace failed');
             }

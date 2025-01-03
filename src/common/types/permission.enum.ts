@@ -24,6 +24,7 @@ export enum Permission {
     DELETE_WORKSPACE = 'delete-workspace',
     ADD_USER_TO_WORKSPACE = 'add-user-to-workspace',
     REMOVE_USER_FROM_WORKSPACE = 'remove-user-from-workspace',
+    ASSIGN_ROLE_IN_WORKSPACE = 'assign-role-in-workspace',
 
     CREATE_BOARD = 'create-board',
     GET_BOARD = 'get-board',
@@ -31,6 +32,7 @@ export enum Permission {
     DELETE_BOARD = 'delete-board',
     ADD_USER_TO_BOARD = 'add-user-to-board',
     REMOVE_USER_FROM_BOARD = 'remove-user-from-board',
+    ASSIGN_ROLE_IN_BOARD = 'assign-role-in-board',
 
     CREATE_LIST = 'create-list',
     GET_LIST = 'get-list',

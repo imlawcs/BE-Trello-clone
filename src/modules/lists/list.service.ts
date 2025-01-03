@@ -109,7 +109,7 @@ class ListService {
                 throw new customError(404, "Card not found");
             }
 
-            const isCardInList = await listRepository.isCardInList(listId, cardId);
+            const isCardInList = await listRepository.isCardInList(listExist, cardExist);
             if (isCardInList) {
                 throw new customError(400, "Card is already in list");
             }

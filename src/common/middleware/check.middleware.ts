@@ -5,78 +5,101 @@ import customError from '../error/customError';
 import listRepository from '../../modules/lists/list.repository';
 import cardRepository from '../../modules/cards/card.repository';
 
-
 class CheckMiddleware {
     public async isBoardInWorkspace(req: Request, res: Response, next: NextFunction) {
-        const boardId = Number(req.params.boardId);
-        const workspaceId = Number(req.body.workspaceId);
+        try {
+            const boardId = Number(req.params.id);
+            const workspaceId = Number(req.body.workspaceId);
 
-        const board = await workspaceRepository.findBoardOfWorkspace(boardId, workspaceId);
-        if(board){
-            return next();
+            const board = await workspaceRepository.findBoardOfWorkspace(workspaceId, boardId);
+            if (board) {
+                return next();
+            }
+
+            throw new customError(403, 'Board is not in this workspace.');
+        } catch (err) {
+            next(err);
         }
-
-        res.status(403).json({
-            status: 403,
-            message: 'Board is not in this workspace.',
-        });
     }
 
     public async isListInBoard(req: Request, res: Response, next: NextFunction) {
-        const listId = Number(req.params.listId);
-        const boardId = Number(req.body.boardId);
+        try {
+            const listId = Number(req.params.id);
+            const boardId = Number(req.body.boardId);
 
-        const list = await boardRepository.isListInBoard(listId, boardId);
-        if(list){
-            return next();
+            const list = await boardRepository.isListInBoard(listId, boardId);
+            if (list) {
+                return next();
+            }
+
+            throw new customError(403, 'List is not in this board.');
+        } catch (err) {
+            next(err);
         }
-
-        res.status(403).json({
-            status: 403,
-            message: 'List is not in this board.',
-        });
     }
 
     public async isCardInBoard(req: Request, res: Response, next: NextFunction) {
-        const cardId = Number(req.params.cardId);
-        const listId = Number(req.body.listId);
-        const boardId = Number(req.body.boardId);
+        try {
+            const cardId = Number(req.params.id);
+            const listId = Number(req.body.listId);
+            const boardId = Number(req.body.boardId);
 
-        const card = await listRepository.isCardInList(cardId, listId);
-        if(card){
-            const board = await boardRepository.isListInBoard(boardId, listId);
-            if(board){
-                return next();
+            const cardExist = await cardRepository.findCardById(cardId);
+            if (!cardExist) {
+                throw new customError(404, 'Card not found.');
             }
-        }
 
-        res.status(403).json({
-            status: 403,
-            message: 'Card is not in this board.',
-        });
-    }
+            const listExist = await listRepository.findByListId(listId);
+            if (!listExist) {
+                throw new customError(404, 'List not found.');
+            }
 
-    public async isChecklistInBoard(req: Request, res: Response, next: NextFunction) {
-        const checklistId = Number(req.params.checklistId);
-        const cardId = Number(req.body.cardId);
-        const listId = Number(req.body.listId);
-        const boardId = Number(req.body.boardId);
-
-        const checklist = await cardRepository.findChecklistInCard(checklistId, cardId);
-        if(checklist){
-            const card = await listRepository.isCardInList(cardId, listId);
-            if(card){
+            const card = await listRepository.isCardInList(listExist, cardExist);
+            if (card) {
                 const board = await boardRepository.isListInBoard(boardId, listId);
-                if(board){
+                if (board) {
                     return next();
                 }
             }
-        }
 
-        res.status(403).json({
-            status: 403,
-            message: 'Checklist is not in this board.',
-        });
+            throw new customError(403, 'Card is not in this board.');
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    public async isChecklistInBoard(req: Request, res: Response, next: NextFunction) {
+        try {
+            const checklistId = Number(req.params.id);
+            const cardId = Number(req.body.cardId);
+            const listId = Number(req.body.listId);
+            const boardId = Number(req.body.boardId);
+
+            const cardExist = await cardRepository.findCardById(cardId);
+            if (!cardExist) {
+                throw new customError(404, 'Card not found.');
+            }
+
+            const listExist = await listRepository.findByListId(listId);
+            if (!listExist) {
+                throw new customError(404, 'List not found.');
+            }
+
+            const checklist = await cardRepository.findChecklistInCard(checklistId, cardId);
+            if (checklist) {
+                const card = await listRepository.isCardInList(listExist, cardExist);
+                if (card) {
+                    const board = await boardRepository.isListInBoard(boardId, listId);
+                    if (board) {
+                        return next();
+                    }
+                }
+            }
+
+            throw new customError(403, 'Checklist is not in this board.');
+        } catch (err) {
+            next(err);
+        }
     }
 }
 

@@ -5,6 +5,7 @@ class CardSchema {
         title: Joi.string().required(),
         description: Joi.string().required().allow(''),
         listId: Joi.number().required(),
+        boardId: Joi.number().required()
     });
 
     public cardUpdateSchema = Joi.object({

@@ -7,6 +7,7 @@ class ChecklistSchema {
         dueDate: Joi.date().required(),
         isDone: Joi.boolean().required(),
         cardId: Joi.number().required(),
+        boardId: Joi.number().required(),
     });
 
     public checklistUpdateSchema = Joi.object({

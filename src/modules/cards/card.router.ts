@@ -8,19 +8,19 @@ import express from "express";
 
 const router = express.Router();
 
-router.get("/", rbac.checkPermission(Permission.GET_CARD), cardController.findAllCard);
-router.get("/:id?", rbac.checkPermission(Permission.GET_CARD), cardController.findCardById);
+router.get("/", auth.authenticateToken, rbac.checkPermission(Permission.GET_CARD), cardController.findAllCard);
+router.get("/:id?", auth.authenticateToken, rbac.checkPermission(Permission.GET_CARD), cardController.findCardById);
 
-router.get("/users/:cardId?", rbac.isUserInBoard, cardController.getCardUsers);
-router.get("/comments/:cardId?", rbac.isUserInBoard, cardController.getCardComments);
-router.get("/attachments/:cardId?", rbac.isUserInBoard, cardController.getCardAttachments);
+router.get("/users/:cardId?", auth.authenticateToken, rbac.isUserInBoard, cardController.getCardUsers);
+router.get("/comments/:cardId?", auth.authenticateToken, rbac.isUserInBoard, cardController.getCardComments);
+router.get("/attachments/:cardId?", auth.authenticateToken, rbac.isUserInBoard, cardController.getCardAttachments);
 
-router.post("/", rbac.checkPermissionInBoard(Permission.CREATE_CARD), cardController.createCard);
-router.put("/:id?", check.isCardInBoard, rbac.checkPermissionInBoard(Permission.UPDATE_CARD), validate.validateUpdateCard, cardController.updateCard);
-router.delete("/:id?", check.isCardInBoard, rbac.checkPermissionInBoard(Permission.DELETE_CARD), validate.validateDeleteCard, cardController.deleteCard);
+router.post("/", auth.authenticateToken, validate.validateCreateCard, rbac.checkPermissionInBoard(Permission.CREATE_CARD), cardController.createCard);
+router.put("/:id?", auth.authenticateToken, validate.validateUpdateCard, check.isCardInBoard, rbac.checkPermissionInBoard(Permission.UPDATE_CARD), cardController.updateCard);
+router.delete("/:id?", auth.authenticateToken, validate.validateDeleteCard, check.isCardInBoard, rbac.checkPermissionInBoard(Permission.DELETE_CARD), cardController.deleteCard);
 
-router.post("/assign-user", rbac.checkPermissionInBoard(Permission.ASSIGN_USER_TO_CARD), validate.validateAssignUserToCard, cardController.assignUser);
-router.delete("/remove-user", rbac.checkPermissionInBoard(Permission.REMOVE_USER_FROM_CARD), validate.validateRemoveUserFromCard, cardController.removeUser);
+router.post("/assign-user", auth.authenticateToken, validate.validateAssignUserToCard, rbac.checkPermissionInBoard(Permission.ASSIGN_USER_TO_CARD), cardController.assignUser);
+router.delete("/remove-user", auth.authenticateToken, validate.validateRemoveUserFromCard, rbac.checkPermissionInBoard(Permission.REMOVE_USER_FROM_CARD), cardController.removeUser);
 
 // router.post("/add-comment",  validate.validateAddCommentToCard, cardController.addComment);
 // router.delete("/delete-comment", validate.validateRemoveCommentFromCard, cardController.removeComment);

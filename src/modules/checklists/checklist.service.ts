@@ -11,6 +11,7 @@ class ChecklistService {
                 throw new customError(400, "Card ID is required.");
             }
             const newChecklist = await checklistRepository.createChecklist(checklist);
+            
             if (newChecklist.id === undefined) {
                 throw new customError(500, "Failed to create checklist.");
             }

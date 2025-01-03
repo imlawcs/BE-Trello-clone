@@ -6,7 +6,7 @@ import customError from "../../common/error/customError";
 class ChecklistRepository {
     public async createChecklist(checklist: Checklist): Promise<Checklist> {
         try {
-            const newChecklist = await dbSource.manager.save(checklist);
+            const newChecklist = await dbSource.getRepository(Checklist).save(checklist);
             return newChecklist;
         }
         catch (error) {

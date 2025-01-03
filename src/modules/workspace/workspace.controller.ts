@@ -55,12 +55,25 @@ class WorkspaceController {
         }
     }
 
+    public async assignRoleInWorkspace(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const workspaceId = Number(req.body.workspaceId);
+            const userId = Number(req.body.userId);
+            const roleId = Number(req.body.roleId);
+            const result: Result = await workspaceService.assignRoleInWorkspace(workspaceId, userId, roleId);
+            res.status(200).send(result);
+        } catch (error) {
+            next(error);
+        }
+    }
+
     public async createWorkspace(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const workspace: Workspace = req.body;
-            const result: Result = await workspaceService.createWorkspace(workspace);
+            const userId = parseInt(req.user.id);
+            const result: Result = await workspaceService.createWorkspace(workspace, userId);
             res.status(result.status).send(result);
-        } catch (error) {
+        } catch (error) { 
             next(error);
         }
     }

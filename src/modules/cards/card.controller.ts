@@ -38,7 +38,9 @@ class CardController {
         try {
             const card: Card = req.body;
             const listId = parseInt(req.body.listId);
-            const result = await cardService.createCard(card, listId);
+            const boardId = parseInt(req.body.boardId);
+            const userId = parseInt(req.user.id);
+            const result = await cardService.createCard(card, listId, boardId, userId);
             res.status(201).json(result);
         } catch (error) {
             next(error);
@@ -49,7 +51,9 @@ class CardController {
         try {
             const id = parseInt(req.params.id);
             const card: Card = req.body;
-            const result = await cardService.updateCard(id, card);
+            const userId = parseInt(req.user.id);
+            const boardId = parseInt(req.body.boardId);
+            const result = await cardService.updateCard(id, card, userId, boardId);
             res.status(200).json(result);
         } catch (error) {
             next(error);
@@ -59,7 +63,9 @@ class CardController {
     public async deleteCard(req: Request, res: Response, next: NextFunction) {
         try {
             const id = parseInt(req.params.id);
-            const result = await cardService.deleteCard(id);
+            const userId = parseInt(req.user.id);
+            const boardId = parseInt(req.body.boardId);
+            const result = await cardService.deleteCard(id, userId, boardId);
             res.status(200).json(result);
         } catch (error) {
             next(error);
@@ -120,16 +126,16 @@ class CardController {
         }
     }
 
-    public async addComment (req: Request, res: Response, next: NextFunction) {
-        try {
-            const commentId = parseInt(req.body.commentId);
-            const cardId = parseInt(req.body.cardId);
-            const result = await cardService.addCommentToCard(cardId, commentId);
-            res.status(200).json(result);
-        } catch (error) {
-            next(error);
-        }
-    }
+    // public async addComment (req: Request, res: Response, next: NextFunction) {
+    //     try {
+    //         const commentId = parseInt(req.body.commentId);
+    //         const cardId = parseInt(req.body.cardId);
+    //         const result = await cardService.addCommentToCard(cardId, commentId);
+    //         res.status(200).json(result);
+    //     } catch (error) {
+    //         next(error);
+    //     }
+    // }
 
     public async removeComment (req: Request, res: Response, next: NextFunction) {
         try {

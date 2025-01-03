@@ -37,6 +37,15 @@ class WorkspaceSchema {
         userId: Joi.number()
             .required()
     });
+
+    assignRoleInWorkspaceSchema = Joi.object({
+        workspaceId: Joi.number()
+            .required(),
+        userId: Joi.number()
+            .required(),
+        roleId: Joi.number()
+            .required()
+    });
 }
 
 export default new WorkspaceSchema();

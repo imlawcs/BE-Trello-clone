@@ -9,6 +9,11 @@ import { Checklist } from "../../database/entities/checklist";
 import { Comment } from "../../database/entities/comment";
 import { Attachment } from "../../database/entities/attachment";
 
+import { ActivityLog } from "../../database/entities/activitylog";
+import activityService from "../activitylogs/activity.service";
+import { Activity } from "../../common/types/activitylog.enum";
+import { Board } from "../../database/entities/board";
+
 class CardRepository {
     public async findAllCard(): Promise<Card[]> {
         try {
@@ -49,24 +54,44 @@ class CardRepository {
         }
     }
 
-    public async createCard(card: Card): Promise<Card> {
+    public async createCard(card: Card, board: Board, user: User): Promise<Card> {
         try {
             const newCard = await dbSource.getRepository(Card).save(card);
+            const activityLog = {
+                action: Activity.CREATE_CARD,
+                description: `User ${user.username} created card ${newCard.title}`,
+                card: newCard,
+                board: board,
+                user: user
+            }
+            await activityService.createActivity(activityLog);
             return newCard;
         } catch (error) {
             throw new customError(400, `CardRepository has error: ${error}`);
         }
     }
 
-    public async updateCard(id: number, card: Partial<Card>): Promise<void> {
+    public async updateCard(id: number, card: Partial<Card>, user: User, board: Board): Promise<void> {
         try {
             await dbSource.getRepository(Card).update(id, card);
+            const updatedCard = await this.findCardById(id);
+            if (!updatedCard) {
+                throw new customError(400, `Card not found`);
+            }
+            const activityLog = {
+                action: Activity.UPDATE_CARD,
+                description: `User ${user.username} updated card ${updatedCard.title}`,
+                card: updatedCard,
+                board: board,
+                user: user
+            }
+            await activityService.createActivity(activityLog);
         } catch (error) {
             throw new customError(400, `CardRepository has error: ${error}`);
         }
     }
 
-    public async deleteCard(id: number): Promise<void> {
+    public async deleteCard(id: number, user: User, board: Board): Promise<void> {
         try {
             const card = await dbSource.getRepository(Card).findOne({
                 where: {
@@ -77,6 +102,14 @@ class CardRepository {
                 throw new customError(400, `Card not found`);
             }
             await dbSource.getRepository(Card).delete(id);
+            const activityLog = {
+                action: Activity.DELETE_CARD,
+                description: `User ${user.username} deleted card ${card.title}`,
+                card: card,
+                board: board,
+                user: user
+            }
+            await activityService.createActivity(activityLog);
         } catch (error) {
             throw new customError(400, `CardRepository has error: ${error}`);
         }
@@ -230,7 +263,7 @@ class CardRepository {
     //     }
     // }
 
-    public async addComment(card: Card, comment: Comment): Promise<void> {
+    public async addComment(card: Card, comment: Comment, user: User, board: Board): Promise<void> {
         try {
             if(!card.comments) {
                 const cardWithComments = await dbSource.getRepository(Card).findOne({
@@ -245,6 +278,15 @@ class CardRepository {
             if(!card.comments.some(c => c.id === comment.id)) {
                 card.comments.push(comment);
                 await dbSource.getRepository(Card).save(card);
+
+                const activityLog = {
+                    action: Activity.ADD_COMMENT,
+                    description: `User ${user.username} added comment to card ${card.title}`,
+                    card: card,
+                    board: board,
+                    user: user
+                }
+                await activityService.createActivity(activityLog);
             }
         } catch (error) {            
             throw new customError(400, `CardRepository has error: ${error}`);
@@ -337,6 +379,7 @@ class CardRepository {
                 },
                 relations: ["attachments"],
             });
+            
             if (!card) {
                 throw new customError(400, `Card not found`);
             }

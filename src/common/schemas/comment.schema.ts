@@ -4,6 +4,7 @@ class CommentSchema {
     public commentCreateSchema = Joi.object({
         comment: Joi.string().required(),
         cardId: Joi.number().required(),
+        boardId: Joi.number().required(),
     });
 
     public commentUpdateSchema = Joi.object({

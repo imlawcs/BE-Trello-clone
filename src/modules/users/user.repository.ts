@@ -3,12 +3,16 @@ import { User } from "../../database/entities/user";
 import { Role } from "../../database/entities/role";
 import customError from "../../common/error/customError";
 import { Workspace } from "../../database/entities/workspace";
+import { UserWorkspace } from "../../database/entities/user_workspace";
+import { UserBoard } from "../../database/entities/user_board";
 import redisClient from "../../config/redis";
 
 const expTime = 60 * 60 * 24; 
 
 class UserRepository {
     private readonly userRepository = dbSource.getRepository(User); 
+    private readonly userWorkspaceRepository = dbSource.getRepository(UserWorkspace);
+    private readonly userBoardRepository = dbSource.getRepository(UserBoard);
 
     public async findAllUser(): Promise<any[]> {
         try {
@@ -251,19 +255,15 @@ class UserRepository {
 
     public async getPermissionsOfUserInWorkspace(userId: number, workspaceId: number): Promise<string[]> {
         try {
-            const user = await this.userRepository.findOne({
+            const user = await this.userWorkspaceRepository.findOne({
                 where: {
-                    id: userId,
+                    user: { id: userId },
+                    workspace: { id: workspaceId },
                 },
-                relations: ["roles", "roles.permissions", "workspaces"],
+                relations: ["role", "role.permissions", "workspace"],
             });
 
-            const workspace = user?.workspaces.find(workspace => workspace.id === workspaceId);
-            if (!workspace) {
-                throw new customError(404, `Workspace with ID ${workspaceId} not found.`);
-            }
-
-            return user?.roles.map(role => role.permissions.map(permission => permission.name)).flat() || [];
+            return user?.role.permissions.map(permission => permission.name) || [];
         }
         catch (error) {
             throw new customError(400, `UserRepository has error: ${error}`);
@@ -272,19 +272,19 @@ class UserRepository {
 
     public async getPermissionsOfUserInBoard(userId: number, boardId: number): Promise<string[]> {
         try {
-            const user = await this.userRepository.findOne({
+            const user = await this.userBoardRepository.findOne({
                 where: {
-                    id: userId,
+                    user: { id: userId },
+                    board: { id: boardId },
                 },
-                relations: ["roles", "roles.permissions", "workspaces", "workspaces.boards"],
+                relations: ["role", "role.permissions", "board"],
             });
 
-            const board = user?.workspaces.flatMap(workspace => workspace.boards).find(board => board.id === boardId);
-            if (!board) {
-                throw new customError(404, `Board with ID ${boardId} not found.`);
+            if (!user) {
+                throw new customError(404, `UserBoard with userId ${userId} and boardId ${boardId} not found.`);
             }
-
-            return user?.roles.map(role => role.permissions.map(permission => permission.name)).flat() || [];
+            
+            return user.role.permissions.map(permission => permission.name) || [];
         }
         catch (error) {
             throw new customError(400, `UserRepository has error: ${error}`);

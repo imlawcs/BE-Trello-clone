@@ -31,5 +31,5 @@ export class ActivityLog {
     board!: Board;
 
     @ManyToOne(() => Card, card => card.activityLogs)
-    card!: Card;
+    card?: Card;
 }

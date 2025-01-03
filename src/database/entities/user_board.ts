@@ -14,9 +14,9 @@ export class UserBoard {
 
     @ManyToOne(() => Board)
     @JoinColumn({ name: 'boardId' })
-    Board!: Board;
+    board!: Board;
 
     @ManyToOne(() => Role)
     @JoinColumn({ name: 'roleId' })
-    Role!: Role
+    role!: Role
 }

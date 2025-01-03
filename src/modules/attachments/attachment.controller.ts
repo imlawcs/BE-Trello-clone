@@ -51,7 +51,9 @@ class AttachmentController {
 
     public async uploadFile(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const cardId = Number(req.body.cardId);
+            const cardId = Number(req.params.cardId);
+            console.log('cardId:', cardId);
+            
             if (!req.file) {
                 throw new customError(400, "No file uploaded");
             }
